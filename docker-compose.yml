@@ -1,0 +1,58 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: concert_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: concert_user
+      POSTGRES_PASSWORD: concert_pass
+      POSTGRES_DB: concert_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U concert_user -d concert_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: concert_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  # App container — dùng khi muốn chạy full stack
+  # Để dev local thì comment phần app lại, chỉ chạy postgres + redis
+  # app:
+  #   build: .
+  #   container_name: concert_app
+  #   restart: unless-stopped
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     NODE_ENV: production
+  #     DB_HOST: postgres
+  #     DB_PORT: 5432
+  #     DB_USER: concert_user
+  #     DB_PASSWORD: concert_pass
+  #     DB_NAME: concert_db
+  #     REDIS_HOST: redis
+  #     REDIS_PORT: 6379
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:

@@ -1,0 +1,153 @@
+openapi: "3.0.3"
+info:
+  title: Concert Booking API
+  version: "1.0.0"
+  description: |
+    Backend API for Concert Ticket Booking Platform.
+    
+    **Auth:** Include `Authorization: Bearer <token>` on protected endpoints.  
+    **Roles:** `customer` — booking flows | `admin` — ops dashboard.
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Local development
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # ── Shared ──────────────────────────────────────────────────────────────
+    SuccessResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data:    { type: object }
+
+    ErrorResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: false }
+        type:    { type: string, example: CONFLICT }
+        message: { type: string }
+
+    # ── Auth ─────────────────────────────────────────────────────────────────
+    RegisterRequest:
+      type: object
+      required: [email, password, name]
+      properties:
+        email:    { type: string, format: email, example: user@example.com }
+        password: { type: string, minLength: 8,  example: "secret123" }
+        name:     { type: string, minLength: 2,  example: "Nguyen Van A" }
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:    { type: string, format: email, example: user@example.com }
+        password: { type: string, example: "secret123" }
+
+    AuthTokens:
+      type: object
+      properties:
+        accessToken: { type: string }
+        user:
+          type: object
+          properties:
+            id:    { type: string, format: uuid }
+            email: { type: string }
+            name:  { type: string }
+            role:  { type: string, enum: [customer, admin] }
+
+tags:
+  - name: Auth
+    description: Register, login, profile
+
+paths:
+  # ── Auth ───────────────────────────────────────────────────────────────────
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new customer account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RegisterRequest" }
+      responses:
+        "201":
+          description: Registered successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data: { $ref: "#/components/schemas/AuthTokens" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "409":
+          description: Email already registered
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login and receive JWT access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data: { $ref: "#/components/schemas/AuthTokens" }
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current user info
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:   { type: string, format: uuid }
+                          role: { type: string, enum: [customer, admin] }
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }

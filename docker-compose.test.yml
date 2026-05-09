@@ -1,0 +1,15 @@
+services:
+  postgres_test:
+    image: postgres:16-alpine
+    container_name: concert_postgres_test
+    environment:
+      POSTGRES_USER: concert_user
+      POSTGRES_PASSWORD: concert_pass
+      POSTGRES_DB: concert_test_db
+    ports:
+      - "5434:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U concert_user -d concert_test_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
