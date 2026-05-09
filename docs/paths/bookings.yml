@@ -1,0 +1,382 @@
+/bookings:
+  post:
+    tags: [Bookings (Customer)]
+    summary: Create a new booking
+    description: |
+      Creates a booking with oversell protection (SELECT FOR UPDATE on ticket tier).
+      
+      **Idempotency:** Send the same `idempotencyKey` UUID on retry — the original booking
+      is returned without creating a duplicate.
+      
+      **Async payment:** After creation, a background job simulates payment (2s delay).
+      Poll `GET /bookings/{id}` to check if status changed to `confirmed` or `failed`.
+    security: [{ bearerAuth: [] }]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/CreateBookingRequest" }
+          example:
+            ticketTierId: "t1b2c3d4-0000-0000-0000-000000000001"
+            quantity: 2
+            voucherCode: "FLASHSALE10"
+            idempotencyKey: "e7f8a9b0-1111-2222-3333-444455556666"
+    responses:
+      "201":
+        description: Booking created (status = pending, payment processing async)
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success: { type: boolean, example: true }
+                data: { $ref: "#/components/schemas/Booking" }
+            example:
+              success: true
+              data:
+                id: "a1b2c3d4-0000-0000-0000-000000000001"
+                userId: "u1b2c3d4-0000-0000-0000-000000000001"
+                ticketTierId: "t1b2c3d4-0000-0000-0000-000000000001"
+                concertId: "c1b2c3d4-0000-0000-0000-000000000001"
+                quantity: 2
+                unitPrice: 1500000
+                totalAmount: 3000000
+                discountAmount: 300000
+                finalAmount: 2700000
+                voucherCode: "FLASHSALE10"
+                status: "pending"
+                idempotencyKey: "e7f8a9b0-1111-2222-3333-444455556666"
+                isFlagged: false
+                flagReason: null
+                createdAt: "2025-06-01T10:00:00.000Z"
+                updatedAt: "2025-06-01T10:00:00.000Z"
+      "400":
+        description: Validation error
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "VALIDATION", message: "Quantity must be between 1 and 10" }
+      "401":
+        description: Missing or invalid JWT token
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "UNAUTHORIZED", message: "Missing or invalid Authorization header" }
+      "404":
+        description: Ticket tier or concert not found
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "NOT_FOUND", message: "Ticket tier not found" }
+      "409":
+        description: Not enough tickets available, or voucher already used
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            examples:
+              oversell:
+                summary: Not enough tickets
+                value: { success: false, type: "CONFLICT", message: "Not enough tickets. Available: 3, Requested: 5" }
+              voucher_used:
+                summary: Voucher already used by this user
+                value: { success: false, type: "CONFLICT", message: "You have already used this voucher" }
+      "422":
+        description: Business rule violation
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            examples:
+              not_on_sale:
+                summary: Concert not accepting bookings
+                value: { success: false, type: "BUSINESS_RULE", message: "Concert is not accepting bookings" }
+              voucher_expired:
+                summary: Voucher expired
+                value: { success: false, type: "BUSINESS_RULE", message: "Voucher has expired" }
+              min_order:
+                summary: Order below minimum value
+                value: { success: false, type: "BUSINESS_RULE", message: "Minimum order value for this voucher is 500000" }
+
+/bookings/my:
+  get:
+    tags: [Bookings (Customer)]
+    summary: Get my bookings (paginated)
+    security: [{ bearerAuth: [] }]
+    parameters:
+      - in: query
+        name: page
+        schema: { type: integer, minimum: 1, default: 1, example: 1 }
+      - in: query
+        name: limit
+        schema: { type: integer, minimum: 1, maximum: 100, default: 20, example: 20 }
+    responses:
+      "200":
+        description: List of caller's bookings
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BookingListResponse" }
+            example:
+              success: true
+              data:
+                bookings:
+                  - id: "a1b2c3d4-0000-0000-0000-000000000001"
+                    status: confirmed
+                    quantity: 2
+                    finalAmount: 2700000
+                    createdAt: "2025-06-01T10:00:00.000Z"
+                total: 1
+                page: 1
+                limit: 20
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "UNAUTHORIZED", message: "Missing or invalid Authorization header" }
+
+/bookings/{id}:
+  get:
+    tags: [Bookings (Customer)]
+    summary: Get booking detail by ID
+    description: Customer can only view their own bookings. Admin can view any.
+    security: [{ bearerAuth: [] }]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string, format: uuid }
+        example: "a1b2c3d4-0000-0000-0000-000000000001"
+    responses:
+      "200":
+        description: Booking detail
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success: { type: boolean, example: true }
+                data: { $ref: "#/components/schemas/Booking" }
+      "403":
+        description: Forbidden — viewing another user's booking
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "FORBIDDEN", message: "You can only view your own bookings" }
+      "404":
+        description: Booking not found
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "NOT_FOUND", message: "Booking not found" }
+
+/bookings/{id}/cancel:
+  patch:
+    tags: [Bookings (Customer)]
+    summary: Cancel my booking
+    description: |
+      Customer can cancel their own `pending` or `confirmed` booking.
+      If booking was `confirmed`, reserved inventory is released automatically.
+    security: [{ bearerAuth: [] }]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string, format: uuid }
+        example: "a1b2c3d4-0000-0000-0000-000000000001"
+    responses:
+      "200":
+        description: Booking cancelled
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success: { type: boolean, example: true }
+                data: { $ref: "#/components/schemas/Booking" }
+            example:
+              success: true
+              data:
+                id: "a1b2c3d4-0000-0000-0000-000000000001"
+                status: cancelled
+                updatedAt: "2025-06-01T11:00:00.000Z"
+      "403":
+        description: Forbidden — cancelling another user's booking
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "FORBIDDEN", message: "You can only cancel your own bookings" }
+      "422":
+        description: Cannot cancel — already cancelled or failed
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "BUSINESS_RULE", message: "Cannot cancel booking with status 'failed'" }
+
+/bookings/{id}/status:
+  patch:
+    tags: [Bookings (Admin)]
+    summary: Manually update booking status (admin)
+    description: |
+      **Allowed transitions:**
+      - `pending` → `confirmed`
+      - `pending` → `cancelled`
+      - `pending` → `failed`
+      - `confirmed` → `cancelled` (also releases reserved inventory)
+    security: [{ bearerAuth: [] }]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string, format: uuid }
+        example: "a1b2c3d4-0000-0000-0000-000000000001"
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/UpdateStatusRequest" }
+          example: { status: confirmed }
+    responses:
+      "200":
+        description: Status updated
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success: { type: boolean, example: true }
+                data: { $ref: "#/components/schemas/Booking" }
+      "400":
+        description: Validation error
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "VALIDATION", message: "status must be one of: confirmed, cancelled, failed" }
+      "404":
+        description: Booking not found
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "NOT_FOUND", message: "Booking not found" }
+      "422":
+        description: Invalid status transition
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "BUSINESS_RULE", message: "Cannot confirm booking with status 'cancelled'" }
+
+/bookings/{id}/flag:
+  patch:
+    tags: [Bookings (Admin)]
+    summary: Flag a suspicious booking (admin)
+    security: [{ bearerAuth: [] }]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string, format: uuid }
+        example: "a1b2c3d4-0000-0000-0000-000000000001"
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/FlagBookingRequest" }
+          example: { reason: "User made 5 bookings within 1 minute — suspected bot" }
+    responses:
+      "200":
+        description: Booking flagged
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success: { type: boolean, example: true }
+                data: { $ref: "#/components/schemas/Booking" }
+            example:
+              success: true
+              data:
+                id: "a1b2c3d4-0000-0000-0000-000000000001"
+                isFlagged: true
+                flagReason: "User made 5 bookings within 1 minute — suspected bot"
+      "404":
+        description: Booking not found
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "NOT_FOUND", message: "Booking not found" }
+
+/bookings/{id}/unflag:
+  patch:
+    tags: [Bookings (Admin)]
+    summary: Remove flag from booking (admin)
+    security: [{ bearerAuth: [] }]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string, format: uuid }
+        example: "a1b2c3d4-0000-0000-0000-000000000001"
+    responses:
+      "200":
+        description: Flag removed
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success: { type: boolean, example: true }
+                data: { $ref: "#/components/schemas/Booking" }
+            example:
+              success: true
+              data:
+                id: "a1b2c3d4-0000-0000-0000-000000000001"
+                isFlagged: false
+                flagReason: null
+      "404":
+        description: Booking not found
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "NOT_FOUND", message: "Booking not found" }
+
+# NOTE: /bookings (admin GET) — endpoint list all bookings cho admin
+# bị bỏ vì path trùng với POST /bookings ở trên.
+# Thực tế cùng path /bookings nên gộp GET + POST vào cùng key:
+/bookings-admin:
+  get:
+    tags: [Bookings (Admin)]
+    summary: List all bookings with filters (admin)
+    security: [{ bearerAuth: [] }]
+    parameters:
+      - in: query
+        name: userId
+        schema: { type: string, format: uuid }
+        example: "u1b2c3d4-0000-0000-0000-000000000001"
+      - in: query
+        name: concertId
+        schema: { type: string, format: uuid }
+        example: "c1b2c3d4-0000-0000-0000-000000000001"
+      - in: query
+        name: status
+        schema: { type: string, enum: [pending, confirmed, cancelled, failed] }
+        example: pending
+      - in: query
+        name: isFlagged
+        schema: { type: string, enum: ["true", "false"] }
+        example: "true"
+      - in: query
+        name: page
+        schema: { type: integer, minimum: 1, default: 1 }
+      - in: query
+        name: limit
+        schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    responses:
+      "200":
+        description: Paginated list of all bookings
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BookingListResponse" }
+      "403":
+        description: Admin access required
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "FORBIDDEN", message: "Admin access required" }

@@ -1,0 +1,37 @@
+info:
+  name: Add ticket tiers
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/concerts/{{concertId}}/tiers"
+  body:
+    type: json
+    data: |-
+      {
+        "tiers": [
+          {
+            "name": "VIPPPPPPPP",
+            "price": 3500000,
+            "totalQty": 100
+          },
+          {
+            "name": "STANDARDDDDD",
+            "price": 1200000,
+            "totalQty": 500
+          },
+          {
+            "name": "EARLY_BIRDDDDD",
+            "price": 800000,
+            "totalQty": 200
+          }
+        ]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,37 @@
+SuccessResponse:
+  type: object
+  properties:
+    success:
+      type: boolean
+      example: true
+    data:
+      type: object
+
+ErrorResponse:
+  type: object
+  properties:
+    success:
+      type: boolean
+      example: false
+    type:
+      type: string
+      example: CONFLICT
+    message:
+      type: string
+      example: Email already exists
+
+Pagination:
+  type: object
+  properties:
+    page:
+      type: integer
+      example: 1
+    limit:
+      type: integer
+      example: 20
+    total:
+      type: integer
+      example: 100
+    totalPages:
+      type: integer
+      example: 5

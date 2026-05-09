@@ -1,0 +1,127 @@
+/auth/register:
+  post:
+    tags:
+      - Auth
+    summary: Register customer
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/RegisterRequest"
+          example:
+            email: user@example.com
+            password: secret123
+            name: Nguyen Van A
+    responses:
+      "201":
+        description: Registered successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  $ref: "#/components/schemas/AuthTokens"
+            example:
+              success: true
+              data:
+                accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                user:
+                  id: a10fc229-6cdc-4232-b538-a2b53be912e4
+                  email: user@example.com
+                  name: Nguyen Van A
+                  role: customer
+      "409":
+        description: Email already exists
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ErrorResponse"
+            example:
+              success: false
+              type: CONFLICT
+              message: Email already exists
+
+/auth/login:
+  post:
+    tags:
+      - Auth
+    summary: Login
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LoginRequest"
+          example:
+            email: admin@gmail.com
+            password: secret123
+    responses:
+      "200":
+        description: Login successful
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  $ref: "#/components/schemas/AuthTokens"
+            example:
+              success: true
+              data:
+                accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                user:
+                  id: a10fc229-6cdc-4232-b538-a2b53be912e4
+                  email: admin@gmail.com
+                  name: Sang
+                  role: admin
+      "401":
+        description: Invalid credentials
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ErrorResponse"
+            example:
+              success: false
+              type: UNAUTHORIZED
+              message: Invalid email or password
+
+/auth/me:
+  get:
+    tags:
+      - Auth
+    summary: Current user
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: User info
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  $ref: "#/components/schemas/MeResponse"
+            example:
+              success: true
+              data:
+                id: 4c9570aa-eb54-4df4-9607-a7e57940b1d0
+                role: customer
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ErrorResponse"
+            example:
+              success: false
+              type: UNAUTHORIZED
+              message: Missing or invalid token

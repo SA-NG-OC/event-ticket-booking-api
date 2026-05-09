@@ -1,0 +1,934 @@
+openapi: "3.0.3"
+
+info:
+  title: Concert Booking API
+  version: "1.0.0"
+  description: |
+    Backend API for Concert Ticket Booking Platform.
+
+    **Auth:** Include `Authorization: Bearer <token>` on protected endpoints  
+    **Roles:** `customer` booking flows | `admin` operations dashboard
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Local development
+
+tags:
+  - name: Auth
+    description: Authentication endpoints
+
+  - name: Concerts (Customer)
+    description: Public concert browsing
+
+  - name: Concerts (Admin)
+    description: Concert management
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        type:
+          type: string
+          example: CONFLICT
+        message:
+          type: string
+          example: Email already exists
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 100
+        totalPages:
+          type: integer
+          example: 5
+
+    # ──────────────── Auth ────────────────
+
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - name
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          minLength: 8
+          example: secret123
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: Nguyen Van A
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: admin@gmail.com
+        password:
+          type: string
+          minLength: 1
+          example: secret123
+
+    AuthUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: a10fc229-6cdc-4232-b538-a2b53be912e4
+        email:
+          type: string
+          format: email
+          example: admin@gmail.com
+        name:
+          type: string
+          example: Sang
+        role:
+          type: string
+          enum:
+            - customer
+            - admin
+          example: admin
+
+    AuthTokens:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhMTBmYzIyOS02Y2RjLTQyMzItYjUzOC1hMmI1M2JlOTEyZTQiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzgzMTk3MjQsImV4cCI6MTc3ODkyNDUyNH0.mRuWIyeV7xpX-YZJnICuev8rGYQoG0ZZw3cWaaVeKKw
+        user:
+          $ref: "#/components/schemas/AuthUser"
+
+    MeResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 4c9570aa-eb54-4df4-9607-a7e57940b1d0
+        role:
+          type: string
+          enum:
+            - customer
+            - admin
+          example: customer
+
+    # ──────────────── Concert ────────────────
+
+    Concert:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 8f205135-f395-421a-9b45-9815a2246e9e
+        name:
+          type: string
+          example: Sơn Tùng Sky Tour 2026
+        description:
+          type: string
+          nullable: true
+          example: Live concert with special guest performances and visual stage effects.
+        venue:
+          type: string
+          example: Sân vận động Mỹ Đình
+        artistName:
+          type: string
+          example: Sơn Tùng M-TP
+        eventDate:
+          type: string
+          format: date-time
+          example: "2026-12-20T19:00:00.000Z"
+        status:
+          type: string
+          enum:
+            - draft
+            - on_sale
+            - sold_out
+            - cancelled
+            - completed
+          example: draft
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-05-09T09:42:12.886Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2026-05-09T09:42:12.886Z"
+
+    TicketTier:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: cf52e84c-b978-4702-bfc8-2fcdd4be5fad
+        concertId:
+          type: string
+          format: uuid
+          example: 8f205135-f395-421a-9b45-9815a2246e9e
+        name:
+          type: string
+          example: VIP
+        price:
+          type: number
+          example: 3500000
+        totalQty:
+          type: integer
+          example: 100
+        reservedQty:
+          type: integer
+          example: 0
+        availableQty:
+          type: integer
+          example: 100
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-05-09T09:42:18.458Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2026-05-09T09:42:18.458Z"
+
+    CreateConcertRequest:
+      type: object
+      required:
+        - name
+        - venue
+        - artistName
+        - eventDate
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 255
+          example: Sơn Tùng Sky Tour 2026
+        description:
+          type: string
+          maxLength: 2000
+          example: Live concert with special guest performances and visual stage effects.
+        venue:
+          type: string
+          minLength: 2
+          maxLength: 255
+          example: Sân vận động Mỹ Đình
+        artistName:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: Sơn Tùng M-TP
+        eventDate:
+          type: string
+          format: date-time
+          example: "2026-12-20T19:00:00.000Z"
+
+    AddTicketTiersRequest:
+      type: object
+      required:
+        - tiers
+      properties:
+        tiers:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required:
+              - name
+              - price
+              - totalQty
+            properties:
+              name:
+                type: string
+                minLength: 1
+                maxLength: 100
+                example: VIP
+              price:
+                type: number
+                example: 3500000
+              totalQty:
+                type: integer
+                example: 100
+          example:
+            - name: VIP
+              price: 3500000
+              totalQty: 100
+            - name: STANDARD
+              price: 1200000
+              totalQty: 500
+            - name: EARLY_BIRD
+              price: 800000
+              totalQty: 200
+
+paths:
+  # ──────────────── Auth ────────────────
+
+  /auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Register customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+            example:
+              email: user@example.com
+              password: secret123
+              name: Nguyen Van A
+      responses:
+        "201":
+          description: Registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: "#/components/schemas/AuthTokens"
+              example:
+                success: true
+                data:
+                  accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhMTBmYzIyOS02Y2RjLTQyMzItYjUzOC1hMmI1M2JlOTEyZTQiLCJyb2xlIjoiY3VzdG9tZXIiLCJpYXQiOjE3NzgzMTk2NjcsImV4cCI6MTc3ODkyNDQ2N30.CwbjWcJvwWstb4_fcAuqP9MqUVvNGMR7CaxYZ6Yb3Sg
+                  user:
+                    id: a10fc229-6cdc-4232-b538-a2b53be912e4
+                    email: admin@gmail.com
+                    name: Sang
+                    role: customer
+        "409":
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                type: CONFLICT
+                message: Email already exists
+
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+            example:
+              email: admin@gmail.com
+              password: secret123
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: "#/components/schemas/AuthTokens"
+              example:
+                success: true
+                data:
+                  accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhMTBmYzIyOS02Y2RjLTQyMzItYjUzOC1hMmI1M2JlOTEyZTQiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzgzMTk3MjQsImV4cCI6MTc3ODkyNDUyNH0.mRuWIyeV7xpX-YZJnICuev8rGYQoG0ZZw3cWaaVeKKw
+                  user:
+                    id: a10fc229-6cdc-4232-b538-a2b53be912e4
+                    email: admin@gmail.com
+                    name: Sang
+                    role: admin
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                type: UNAUTHORIZED
+                message: Invalid email or password
+
+  /auth/me:
+    get:
+      tags:
+        - Auth
+      summary: Current user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: "#/components/schemas/MeResponse"
+              example:
+                success: true
+                data:
+                  id: 4c9570aa-eb54-4df4-9607-a7e57940b1d0
+                  role: customer
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                type: UNAUTHORIZED
+                message: Missing or invalid token
+
+  # ──────────────── Concerts (Customer) ────────────────
+
+  /concerts:
+    get:
+      tags:
+        - Concerts (Customer)
+      summary: List concerts
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - draft
+              - on_sale
+              - sold_out
+              - cancelled
+              - completed
+          example: on_sale
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          example: 20
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      concerts:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Concert"
+                      total:
+                        type: integer
+                      page:
+                        type: integer
+                        nullable: true
+                      limit:
+                        type: integer
+                        nullable: true
+              example:
+                success: true
+                data:
+                  concerts:
+                    - id: 8f205135-f395-421a-9b45-9815a2246e9e
+                      name: Sơn Tùng Sky Tour 2026
+                      description: Live concert with special guest performances and visual stage effects.
+                      venue: Sân vận động Mỹ Đình
+                      artistName: Sơn Tùng M-TP
+                      eventDate: "2026-12-20T19:00:00.000Z"
+                      status: cancelled
+                      createdAt: "2026-05-09T09:42:12.886Z"
+                      updatedAt: "2026-05-09T09:42:24.426Z"
+                  total: 1
+                  page: null
+                  limit: null
+
+    post:
+      tags:
+        - Concerts (Admin)
+      summary: Create concert
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateConcertRequest"
+            example:
+              name: Sơn Tùng Sky Tour 2026
+              description: Live concert with special guest performances and visual stage effects.
+              venue: Sân vận động Mỹ Đình
+              artistName: Sơn Tùng M-TP
+              eventDate: "2026-12-20T19:00:00.000Z"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: "#/components/schemas/Concert"
+              example:
+                success: true
+                data:
+                  id: 8f205135-f395-421a-9b45-9815a2246e9e
+                  name: Sơn Tùng Sky Tour 2026
+                  description: Live concert with special guest performances and visual stage effects.
+                  venue: Sân vận động Mỹ Đình
+                  artistName: Sơn Tùng M-TP
+                  eventDate: "2026-12-20T19:00:00.000Z"
+                  status: draft
+                  createdAt: "2026-05-09T09:42:12.886Z"
+                  updatedAt: "2026-05-09T09:42:12.886Z"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                type: UNAUTHORIZED
+                message: Missing or invalid token
+
+  /concerts/{id}:
+    get:
+      tags:
+        - Concerts (Customer)
+      summary: Concert detail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 8f205135-f395-421a-9b45-9815a2246e9e
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      concert:
+                        $ref: "#/components/schemas/Concert"
+                      tiers:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/TicketTier"
+              example:
+                success: true
+                data:
+                  concert:
+                    id: 8f205135-f395-421a-9b45-9815a2246e9e
+                    name: Sơn Tùng Sky Tour 2026
+                    description: Live concert with special guest performances and visual stage effects.
+                    venue: Sân vận động Mỹ Đình
+                    artistName: Sơn Tùng M-TP
+                    eventDate: "2026-12-20T19:00:00.000Z"
+                    status: cancelled
+                    createdAt: "2026-05-09T09:42:12.886Z"
+                    updatedAt: "2026-05-09T09:42:24.426Z"
+                  tiers:
+                    - id: 60eb8f9e-ac82-49e7-8cb2-607a23e5a6c1
+                      concertId: 8f205135-f395-421a-9b45-9815a2246e9e
+                      name: EARLY_BIRD
+                      price: 800000
+                      totalQty: 200
+                      reservedQty: 0
+                      availableQty: 200
+                      createdAt: "2026-05-09T09:42:18.458Z"
+                      updatedAt: "2026-05-09T09:42:18.458Z"
+                    - id: 083e0830-53cd-40fd-9601-fceb5b4d260e
+                      concertId: 8f205135-f395-421a-9b45-9815a2246e9e
+                      name: STANDARD
+                      price: 1200000
+                      totalQty: 500
+                      reservedQty: 0
+                      availableQty: 500
+                      createdAt: "2026-05-09T09:42:18.458Z"
+                      updatedAt: "2026-05-09T09:42:18.458Z"
+                    - id: cf52e84c-b978-4702-bfc8-2fcdd4be5fad
+                      concertId: 8f205135-f395-421a-9b45-9815a2246e9e
+                      name: VIP
+                      price: 3500000
+                      totalQty: 100
+                      reservedQty: 0
+                      availableQty: 100
+                      createdAt: "2026-05-09T09:42:18.458Z"
+                      updatedAt: "2026-05-09T09:42:18.458Z"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                type: NOT_FOUND
+                message: Concert not found
+
+  /concerts/{id}/availability:
+    get:
+      tags:
+        - Concerts (Customer)
+      summary: Ticket availability
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 8f205135-f395-421a-9b45-9815a2246e9e
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/TicketTier"
+              example:
+                success: true
+                data:
+                  - id: 60eb8f9e-ac82-49e7-8cb2-607a23e5a6c1
+                    concertId: 8f205135-f395-421a-9b45-9815a2246e9e
+                    name: EARLY_BIRD
+                    price: 800000
+                    totalQty: 200
+                    reservedQty: 0
+                    availableQty: 200
+                    createdAt: "2026-05-09T09:42:18.458Z"
+                    updatedAt: "2026-05-09T09:42:18.458Z"
+                  - id: 083e0830-53cd-40fd-9601-fceb5b4d260e
+                    concertId: 8f205135-f395-421a-9b45-9815a2246e9e
+                    name: STANDARD
+                    price: 1200000
+                    totalQty: 500
+                    reservedQty: 0
+                    availableQty: 500
+                    createdAt: "2026-05-09T09:42:18.458Z"
+                    updatedAt: "2026-05-09T09:42:18.458Z"
+                  - id: cf52e84c-b978-4702-bfc8-2fcdd4be5fad
+                    concertId: 8f205135-f395-421a-9b45-9815a2246e9e
+                    name: VIP
+                    price: 3500000
+                    totalQty: 100
+                    reservedQty: 0
+                    availableQty: 100
+                    createdAt: "2026-05-09T09:42:18.458Z"
+                    updatedAt: "2026-05-09T09:42:18.458Z"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                type: NOT_FOUND
+                message: Concert not found
+
+  # ──────────────── Concerts (Admin) ────────────────
+
+  /concerts/{id}/tiers:
+    post:
+      tags:
+        - Concerts (Admin)
+      summary: Add ticket tiers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 8f205135-f395-421a-9b45-9815a2246e9e
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddTicketTiersRequest"
+            example:
+              tiers:
+                - name: VIP
+                  price: 3500000
+                  totalQty: 100
+                - name: STANDARD
+                  price: 1200000
+                  totalQty: 500
+                - name: EARLY_BIRD
+                  price: 800000
+                  totalQty: 200
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/TicketTier"
+              example:
+                success: true
+                data:
+                  - id: cf52e84c-b978-4702-bfc8-2fcdd4be5fad
+                    concertId: 8f205135-f395-421a-9b45-9815a2246e9e
+                    name: VIP
+                    price: 3500000
+                    totalQty: 100
+                    reservedQty: 0
+                    availableQty: 100
+                    createdAt: "2026-05-09T09:42:18.458Z"
+                    updatedAt: "2026-05-09T09:42:18.458Z"
+                  - id: 083e0830-53cd-40fd-9601-fceb5b4d260e
+                    concertId: 8f205135-f395-421a-9b45-9815a2246e9e
+                    name: STANDARD
+                    price: 1200000
+                    totalQty: 500
+                    reservedQty: 0
+                    availableQty: 500
+                    createdAt: "2026-05-09T09:42:18.458Z"
+                    updatedAt: "2026-05-09T09:42:18.458Z"
+                  - id: 60eb8f9e-ac82-49e7-8cb2-607a23e5a6c1
+                    concertId: 8f205135-f395-421a-9b45-9815a2246e9e
+                    name: EARLY_BIRD
+                    price: 800000
+                    totalQty: 200
+                    reservedQty: 0
+                    availableQty: 200
+                    createdAt: "2026-05-09T09:42:18.458Z"
+                    updatedAt: "2026-05-09T09:42:18.458Z"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                type: UNAUTHORIZED
+                message: Missing or invalid token
+        "404":
+          description: Concert not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                type: NOT_FOUND
+                message: Concert not found
+
+  /concerts/{id}/publish:
+    patch:
+      tags:
+        - Concerts (Admin)
+      summary: Publish concert
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 8f205135-f395-421a-9b45-9815a2246e9e
+      responses:
+        "200":
+          description: Published
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: "#/components/schemas/Concert"
+              example:
+                success: true
+                data:
+                  id: 8f205135-f395-421a-9b45-9815a2246e9e
+                  name: Sơn Tùng Sky Tour 2026
+                  description: Live concert with special guest performances and visual stage effects.
+                  venue: Sân vận động Mỹ Đình
+                  artistName: Sơn Tùng M-TP
+                  eventDate: "2026-12-20T19:00:00.000Z"
+                  status: on_sale
+                  createdAt: "2026-05-09T09:42:12.886Z"
+                  updatedAt: "2026-05-09T09:42:21.905Z"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                type: UNAUTHORIZED
+                message: Missing or invalid token
+        "404":
+          description: Concert not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                type: NOT_FOUND
+                message: Concert not found
+
+  /concerts/{id}/cancel:
+    patch:
+      tags:
+        - Concerts (Admin)
+      summary: Cancel concert
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 8f205135-f395-421a-9b45-9815a2246e9e
+      responses:
+        "200":
+          description: Cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: "#/components/schemas/Concert"
+              example:
+                success: true
+                data:
+                  id: 8f205135-f395-421a-9b45-9815a2246e9e
+                  name: Sơn Tùng Sky Tour 2026
+                  description: Live concert with special guest performances and visual stage effects.
+                  venue: Sân vận động Mỹ Đình
+                  artistName: Sơn Tùng M-TP
+                  eventDate: "2026-12-20T19:00:00.000Z"
+                  status: cancelled
+                  createdAt: "2026-05-09T09:42:12.886Z"
+                  updatedAt: "2026-05-09T09:42:24.426Z"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                type: UNAUTHORIZED
+                message: Missing or invalid token
+        "404":
+          description: Concert not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                type: NOT_FOUND
+                message: Concert not found

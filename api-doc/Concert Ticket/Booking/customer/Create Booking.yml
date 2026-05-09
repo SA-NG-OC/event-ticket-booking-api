@@ -1,18 +1,18 @@
 info:
-  name: Register
+  name: Create Booking
   type: http
-  seq: 2
+  seq: 1
 
 http:
   method: POST
-  url: "{{baseUrl}}/auth/register"
+  url: "{{baseUrl}}/bookings"
   body:
     type: json
     data: |-
       {
-        "email": "test@gmail.com",
-        "password": "12345678",
-        "name": "Sang"
+        "ticketTierId": "bce7708f-8eb9-4562-96de-70175956c0b0",
+        "quantity": 2,
+        "idempotencyKey": "cf52e84c-b978-4702-bfc8-2fcdd4be5fad"
       }
   auth: inherit
 
@@ -21,7 +21,7 @@ runtime:
     - type: after-response
       code: |-
         var data = res.getBody();
-        bru.setVar("accessToken", data.data.accessToken);
+        bru.setVar("bookingId", data.data.id);
 
 settings:
   encodeUrl: true

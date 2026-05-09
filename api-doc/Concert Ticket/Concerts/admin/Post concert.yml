@@ -1,0 +1,32 @@
+info:
+  name: Post concert
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/concerts"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Sơn Tùng Sky Tour 2026",
+        "description": "Live concert with special guest performances and visual stage effects.",
+        "venue": "Sân vận động Mỹ Đình",
+        "artistName": "Sơn Tùng M-TP",
+        "eventDate": "2026-12-20T19:00:00.000Z"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        var data = res.getBody();
+        bru.setVar("concertId", data.data.id);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,14 +1,12 @@
 info:
-  name: Me
+  name: Get all concerts
   type: http
-  seq: 3
+  seq: 2
 
 http:
   method: GET
-  url: "{{baseUrl}}/auth/me"
-  auth:
-    type: bearer
-    token: "{{accessToken}}"
+  url: "{{baseUrl}}/concerts"
+  auth: inherit
 
 settings:
   encodeUrl: true

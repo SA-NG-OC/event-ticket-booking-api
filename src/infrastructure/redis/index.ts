@@ -8,5 +8,25 @@ export const redis = new Redis({
     lazyConnect: true,
 });
 
-redis.on("connect", () => console.log("Redis connected"));
-redis.on("error", (err) => console.error("Redis error:", err));
+export const bullRedis = new Redis({
+    host: config.REDIS_HOST,
+    port: config.REDIS_PORT,
+    maxRetriesPerRequest: null,
+    lazyConnect: true,
+});
+
+redis.on("connect", () => {
+    console.log("Redis connected");
+});
+
+redis.on("error", (err) => {
+    console.error("Redis error:", err);
+});
+
+bullRedis.on("connect", () => {
+    console.log("BullMQ Redis connected");
+});
+
+bullRedis.on("error", (err) => {
+    console.error("BullMQ Redis error:", err);
+});

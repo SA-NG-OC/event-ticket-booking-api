@@ -1,16 +1,27 @@
 openapi: "3.0.3"
+
 info:
   title: Concert Booking API
   version: "1.0.0"
   description: |
     Backend API for Concert Ticket Booking Platform.
-    
-    **Auth:** Include `Authorization: Bearer <token>` on protected endpoints.  
-    **Roles:** `customer` — booking flows | `admin` — ops dashboard.
+
+    **Auth:** Include `Authorization: Bearer <token>` on protected endpoints  
+    **Roles:** `customer` booking flows | `admin` operations dashboard
 
 servers:
-  - url: http://localhost:3000/api/v1
+  - url: http://localhost:3000
     description: Local development
+
+tags:
+  - name: Auth
+    description: Authentication endpoints
+  - name: Concerts (Customer)
+    description: Public concert browsing
+  - name: Concerts (Admin)
+    description: Concert management
+  # - name: Bookings
+  # - name: Vouchers
 
 components:
   securitySchemes:
@@ -20,134 +31,325 @@ components:
       bearerFormat: JWT
 
   schemas:
-    # ── Shared ──────────────────────────────────────────────────────────────
+    # ── Common ──────────────────────────────────────────────────────────────────
     SuccessResponse:
       type: object
       properties:
-        success: { type: boolean, example: true }
-        data:    { type: object }
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
 
     ErrorResponse:
       type: object
       properties:
-        success: { type: boolean, example: false }
-        type:    { type: string, example: CONFLICT }
-        message: { type: string }
+        success:
+          type: boolean
+          example: false
+        type:
+          type: string
+          example: CONFLICT
+        message:
+          type: string
+          example: Email already exists
 
-    # ── Auth ─────────────────────────────────────────────────────────────────
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 100
+        totalPages:
+          type: integer
+          example: 5
+
+    # ── Auth ────────────────────────────────────────────────────────────────────
     RegisterRequest:
       type: object
       required: [email, password, name]
       properties:
-        email:    { type: string, format: email, example: user@example.com }
-        password: { type: string, minLength: 8,  example: "secret123" }
-        name:     { type: string, minLength: 2,  example: "Nguyen Van A" }
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          minLength: 8
+          example: secret123
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: Nguyen Van A
 
     LoginRequest:
       type: object
       required: [email, password]
       properties:
-        email:    { type: string, format: email, example: user@example.com }
-        password: { type: string, example: "secret123" }
+        email:
+          type: string
+          format: email
+          example: admin@gmail.com
+        password:
+          type: string
+          minLength: 1
+          example: secret123
+
+    AuthUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: a10fc229-6cdc-4232-b538-a2b53be912e4
+        email:
+          type: string
+          format: email
+          example: admin@gmail.com
+        name:
+          type: string
+          example: Sang
+        role:
+          type: string
+          enum: [customer, admin]
+          example: admin
 
     AuthTokens:
       type: object
       properties:
-        accessToken: { type: string }
+        accessToken:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         user:
+          $ref: "#/components/schemas/AuthUser"
+
+    MeResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 4c9570aa-eb54-4df4-9607-a7e57940b1d0
+        role:
+          type: string
+          enum: [customer, admin]
+          example: customer
+
+    # ── Concert ─────────────────────────────────────────────────────────────────
+    Concert:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 8f205135-f395-421a-9b45-9815a2246e9e
+        name:
+          type: string
+          example: "Son Tung Sky Tour 2026"
+        description:
+          type: string
+          nullable: true
+          example: Live concert with special guest performances and visual stage effects.
+        venue:
+          type: string
+          example: "San van dong My Dinh"
+        artistName:
+          type: string
+          example: "Son Tung M-TP"
+        eventDate:
+          type: string
+          format: date-time
+          example: "2026-12-20T19:00:00.000Z"
+        status:
+          type: string
+          enum: [draft, on_sale, sold_out, cancelled, completed]
+          example: draft
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-05-09T09:42:12.886Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2026-05-09T09:42:12.886Z"
+
+    TicketTier:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: cf52e84c-b978-4702-bfc8-2fcdd4be5fad
+        concertId:
+          type: string
+          format: uuid
+          example: 8f205135-f395-421a-9b45-9815a2246e9e
+        name:
+          type: string
+          example: VIP
+        price:
+          type: number
+          example: 3500000
+        totalQty:
+          type: integer
+          example: 100
+        reservedQty:
+          type: integer
+          example: 0
+        soldQty:           
+          type: integer
+          example: 40
+        availableQty:
+          type: integer
+          example: 50
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-05-09T09:42:18.458Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2026-05-09T09:42:18.458Z"
+
+    CreateConcertRequest:
+      type: object
+      required: [name, venue, artistName, eventDate]
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 255
+          example: "Son Tung Sky Tour 2026"
+        description:
+          type: string
+          maxLength: 2000
+          example: Live concert with special guest performances and visual stage effects.
+        venue:
+          type: string
+          minLength: 2
+          maxLength: 255
+          example: "San van dong My Dinh"
+        artistName:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: "Son Tung M-TP"
+        eventDate:
+          type: string
+          format: date-time
+          example: "2026-12-20T19:00:00.000Z"
+
+    AddTicketTiersRequest:
+      type: object
+      required: [tiers]
+      properties:
+        tiers:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [name, price, totalQty]
+            properties:
+              name:
+                type: string
+                minLength: 1
+                maxLength: 100
+                example: VIP
+              price:
+                type: number
+                example: 3500000
+              totalQty:
+                type: integer
+                example: 100
+          example:
+            - { name: VIP,        price: 3500000, totalQty: 100 }
+            - { name: STANDARD,   price: 1200000, totalQty: 500 }
+            - { name: EARLY_BIRD, price: 800000,  totalQty: 200 }
+            
+    Booking:
+      type: object
+      properties:
+        id:             { type: string, format: uuid, example: "a1b2c3d4-0000-0000-0000-000000000001" }
+        userId:         { type: string, format: uuid, example: "u1b2c3d4-0000-0000-0000-000000000001" }
+        ticketTierId:   { type: string, format: uuid, example: "t1b2c3d4-0000-0000-0000-000000000001" }
+        concertId:      { type: string, format: uuid, example: "c1b2c3d4-0000-0000-0000-000000000001" }
+        quantity:       { type: integer, minimum: 1, maximum: 10, example: 2 }
+        unitPrice:      { type: number, example: 1500000 }
+        totalAmount:    { type: number, example: 3000000 }
+        discountAmount: { type: number, example: 300000 }
+        finalAmount:    { type: number, example: 2700000 }
+        voucherCode:    { type: string, nullable: true, maxLength: 50, example: "FLASHSALE10" }
+        status:
+          type: string
+          enum: [pending, confirmed, cancelled, failed]
+          example: pending
+        idempotencyKey: { type: string, format: uuid, example: "e7f8a9b0-1111-2222-3333-444455556666" }
+        isFlagged:      { type: boolean, example: false }
+        flagReason:     { type: string, nullable: true, example: null }
+        createdAt:      { type: string, format: date-time, example: "2025-06-01T10:00:00.000Z" }
+        updatedAt:      { type: string, format: date-time, example: "2025-06-01T10:00:05.000Z" }
+ 
+    BookingListResponse:
+      type: object
+      properties:
+        success:  { type: boolean, example: true }
+        data:
           type: object
           properties:
-            id:    { type: string, format: uuid }
-            email: { type: string }
-            name:  { type: string }
-            role:  { type: string, enum: [customer, admin] }
-
-tags:
-  - name: Auth
-    description: Register, login, profile
-
-paths:
-  # ── Auth ───────────────────────────────────────────────────────────────────
-  /auth/register:
-    post:
-      tags: [Auth]
-      summary: Register a new customer account
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/RegisterRequest" }
-      responses:
-        "201":
-          description: Registered successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: "#/components/schemas/SuccessResponse"
-                  - type: object
-                    properties:
-                      data: { $ref: "#/components/schemas/AuthTokens" }
-        "400":
-          description: Validation error
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorResponse" }
-        "409":
-          description: Email already registered
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorResponse" }
-
-  /auth/login:
-    post:
-      tags: [Auth]
-      summary: Login and receive JWT access token
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/LoginRequest" }
-      responses:
-        "200":
-          description: Login successful
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: "#/components/schemas/SuccessResponse"
-                  - type: object
-                    properties:
-                      data: { $ref: "#/components/schemas/AuthTokens" }
-        "401":
-          description: Invalid credentials
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorResponse" }
-
-  /auth/me:
-    get:
-      tags: [Auth]
-      summary: Get current user info
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          description: Current user
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: "#/components/schemas/SuccessResponse"
-                  - type: object
-                    properties:
-                      data:
-                        type: object
-                        properties:
-                          id:   { type: string, format: uuid }
-                          role: { type: string, enum: [customer, admin] }
-        "401":
-          description: Missing or invalid token
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorResponse" }
+            bookings:
+              type: array
+              items: { $ref: "#/components/schemas/Booking" }
+            total:  { type: integer, example: 42 }
+            page:   { type: integer, example: 1 }
+            limit:  { type: integer, example: 20 }
+ 
+    CreateBookingRequest:
+      type: object
+      required: [ticketTierId, quantity, idempotencyKey]
+      properties:
+        ticketTierId:
+          type: string
+          format: uuid
+          example: "t1b2c3d4-0000-0000-0000-000000000001"
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 10
+          example: 2
+        voucherCode:
+          type: string
+          minLength: 1
+          maxLength: 50
+          nullable: true
+          example: "FLASHSALE10"
+        idempotencyKey:
+          type: string
+          format: uuid
+          description: Client-generated UUID. Same key returns same booking (no duplicate).
+          example: "e7f8a9b0-1111-2222-3333-444455556666"
+ 
+    UpdateStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [confirmed, cancelled, failed]
+          example: confirmed
+ 
+    FlagBookingRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+          example: "User made 5 bookings within 1 minute — suspected bot"

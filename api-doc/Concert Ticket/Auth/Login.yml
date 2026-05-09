@@ -10,10 +10,17 @@ http:
     type: json
     data: |-
       {
-        "email": "test@gmail.com",
+        "email": "admin@gmail.com",
         "password": "12345678"
       }
   auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        var data = res.getBody();
+        bru.setVar("accessToken", data.data.accessToken);
 
 settings:
   encodeUrl: true

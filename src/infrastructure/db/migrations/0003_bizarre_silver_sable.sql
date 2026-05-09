@@ -1,0 +1,1 @@
+ALTER TABLE "ticket_tiers" ADD COLUMN "sold_qty" integer DEFAULT 0 NOT NULL;

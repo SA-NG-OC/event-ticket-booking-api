@@ -1,0 +1,21 @@
+info:
+  name: Update Booking Status
+  type: http
+  seq: 2
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}/bookings/{{bookingId}}/status"
+  body:
+    type: json
+    data: |-
+      {
+          "status": "confirmed"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

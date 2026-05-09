@@ -1,0 +1,79 @@
+RegisterRequest:
+  type: object
+  required:
+    - email
+    - password
+    - name
+  properties:
+    email:
+      type: string
+      format: email
+      example: user@example.com
+    password:
+      type: string
+      minLength: 8
+      example: secret123
+    name:
+      type: string
+      minLength: 2
+      maxLength: 100
+      example: Nguyen Van A
+
+LoginRequest:
+  type: object
+  required:
+    - email
+    - password
+  properties:
+    email:
+      type: string
+      format: email
+      example: admin@gmail.com
+    password:
+      type: string
+      minLength: 1
+      example: secret123
+
+AuthUser:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+      example: a10fc229-6cdc-4232-b538-a2b53be912e4
+    email:
+      type: string
+      format: email
+      example: admin@gmail.com
+    name:
+      type: string
+      example: Sang
+    role:
+      type: string
+      enum:
+        - customer
+        - admin
+      example: admin
+
+AuthTokens:
+  type: object
+  properties:
+    accessToken:
+      type: string
+      example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    user:
+      $ref: "#/components/schemas/AuthUser"
+
+MeResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+      example: 4c9570aa-eb54-4df4-9607-a7e57940b1d0
+    role:
+      type: string
+      enum:
+        - customer
+        - admin
+      example: customer
