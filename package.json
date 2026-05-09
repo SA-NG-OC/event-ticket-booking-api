@@ -17,7 +17,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src --ext .ts",
-    "studio:test": "cross-env DATABASE_URL=postgresql://concert_user:concert_pass@localhost:5434/concert_test_db drizzle-kit studio --port 4984"
+    "studio:test": "cross-env DATABASE_URL=postgresql://concert_user:concert_pass@localhost:5434/concert_test_db drizzle-kit studio --port 4984",
+    "db:migrate:test": "cross-env DATABASE_URL=postgresql://concert_user:concert_pass@localhost:5434/concert_test_db drizzle-kit migrate"
   },
   "keywords": [],
   "author": "",

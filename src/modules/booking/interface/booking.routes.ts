@@ -18,7 +18,7 @@ const bookingCtrl = new BookingController(bookingSvc);
 // ── Customer routes ───────────────────────────────────────────────────────────
 router.post("/", authenticate, requireCustomer, validate(CreateBookingSchema), bookingCtrl.createBooking);
 router.get("/my", authenticate, requireCustomer, validate(ListBookingsSchema), bookingCtrl.getMyBookings);
-router.get("/:id", authenticate, requireCustomer, validate(BookingIdSchema), bookingCtrl.getBookingById);
+router.get("/:id", authenticate, validate(BookingIdSchema), bookingCtrl.getBookingById);
 router.patch("/:id/cancel", authenticate, requireCustomer, validate(BookingIdSchema), bookingCtrl.cancelMyBooking);
 
 // ── Ops / Admin routes ────────────────────────────────────────────────────────

@@ -39,8 +39,14 @@ function toTierProps(row: any): TicketTierProps {
 function toVoucherProps(row: any): VoucherProps {
     return {
         ...row,
+        discountType: row.discountType ?? row.discount_type,
         discountValue: Number(row.discountValue ?? row.discount_value),
+        maxUses: row.maxUses ?? row.max_uses,
+        usedCount: row.usedCount ?? row.used_count,
         minOrderValue: Number(row.minOrderValue ?? row.min_order_value),
+        concertId: row.concertId ?? row.concert_id,
+        expiresAt: row.expiresAt ?? row.expires_at,
+        createdAt: row.createdAt ?? row.created_at,
     };
 }
 
