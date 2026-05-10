@@ -125,9 +125,6 @@ npm test
 # Watch mode — tự re-run khi save file
 npm run test:watch
 
-# Với coverage report
-npm run test:coverage
-
 # Chạy 1 file test cụ thể
 npm test tests/integration/booking.test.ts
 npm test tests/integration/voucher.test.ts
