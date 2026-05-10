@@ -1,3 +1,4 @@
+import { index } from "drizzle-orm/pg-core";
 import {
     pgTable, uuid, varchar, text, integer,
     numeric, timestamp, pgEnum,
@@ -21,7 +22,11 @@ export const concerts = pgTable("concerts", {
     status: concertStatusEnum("status").notNull().default("draft"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (t) => [
+    index("idx_concerts_status").on(t.status),
+    index("idx_concerts_event_date").on(t.eventDate),
+    index("idx_concerts_status_event_date").on(t.status, t.eventDate),
+]);
 
 export const ticketTiers = pgTable("ticket_tiers", {
     id: uuid("id").primaryKey().defaultRandom(),
@@ -33,7 +38,9 @@ export const ticketTiers = pgTable("ticket_tiers", {
     soldQty: integer("sold_qty").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (t) => [
+    index("idx_ticket_tiers_concert_id").on(t.concertId),
+]);
 
 export type ConcertRow = typeof concerts.$inferSelect;
 export type NewConcertRow = typeof concerts.$inferInsert;
