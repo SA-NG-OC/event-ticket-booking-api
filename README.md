@@ -95,11 +95,6 @@ npm run db:migrate
 npm run db:seed
 ```
 
-Seed tạo sẵn:
-- 2 concerts (status `on_sale`)
-- 5 ticket tiers
-- 3 voucher campaigns (`FLASHSALE10`, `VIP200K`, `WELCOME50K`)
-
 ### 6. Chạy dev server
 
 ```bash
@@ -175,9 +170,8 @@ brew install bruno
 1. Mở Bruno → **Open Collection** → chọn thư mục `bruno/`
 2. Chọn environment **Local**
 3. Chạy theo thứ tự:
-   - `auth/register` → tự động lưu `accessToken` vào env
    - `auth/login` → cập nhật token nếu cần
-   - Các request khác dùng `{{accessToken}}` tự động
+   - Các request khác dùng `{{accessToken}}` hoặc `{{accessTokenAdmin}}` tự động
 
 > Script `after-response` trong mỗi `.bru` file sẽ tự lưu token — không cần copy thủ công.
 
@@ -186,42 +180,56 @@ brew install bruno
 ## Cấu trúc project
 
 ```
-src/
-├── modules/              # Bounded contexts (DDD-lite)
-│   ├── auth/
-│   ├── concert/
-│   ├── booking/
-│   └── voucher/
-│       ├── domain/       # Entity + IRepository interface
-│       ├── application/  # Service (business logic)
-│       ├── infrastructure/  # Repository implementation (Drizzle)
-│       └── interface/    # Controller + Routes + Zod schema
-├── infrastructure/
-│   ├── db/               # Drizzle client + schema + migrations + seed
-│   ├── queue/            # BullMQ queue + worker
-│   └── redis/            # Redis client
-├── shared/
-│   ├── errors/           # AppError classes
-│   ├── middleware/        # auth, validate, error handler
-│   └── result.ts         # neverthrow Result type + DomainError
-├── config/               # Type-safe env config (Zod)
-├── docs/                 # Swagger loader
-└── app.ts                # Express app bootstrap
-
-docs/                     # OpenAPI YAML files
-├── swagger.yml           # Auth + Concert
-├── booking.yml
-└── voucher.yml
-
-tests/
-├── integration/          # Supertest tests (real DB)
-│   ├── auth.test.ts
-│   ├── concert.test.ts
-│   ├── booking.test.ts
-│   └── voucher.test.ts
-└── setup/
-    ├── global.ts         # Migrate test DB trước khi chạy suite
-    └── each.ts           # Override DB env sang test DB
+├── docs/                     # OpenAPI YAML files định nghĩa API
+│   ├── paths/
+│   │   ├── auth.yml
+│   │   ├── bookings.yml
+│   │   ├── concerts.yml
+│   │   └── vouchers.yml
+│   └── swagger.yml           # File cấu hình Swagger chính ghép nối các paths
+├── src/
+│   ├── config/               # Type-safe env config (Zod)
+│   ├── docs/                 # Swagger loader (Code để đọc/load các file YAML từ thư mục docs ở ngoài)
+│   ├── infrastructure/
+│   │   ├── db/               # Drizzle client + schema + migrations + seed
+│   │   ├── queue/            # BullMQ queue + worker
+│   │   └── redis/            # Redis client
+│   ├── modules/              # Bounded contexts (DDD-lite)
+│   │   ├── auth/
+│   │   ├── concert/
+│   │   ├── booking/
+│   │   └── voucher/
+│   │       ├── domain/       # Entity + IRepository interface
+│   │       ├── application/  # Service (business logic)
+│   │       ├── infrastructure/# Repository implementation (Drizzle)
+│   │       └── interface/    # Controller + Routes + Zod schema
+│   ├── shared/
+│   │   ├── errors/           # AppError classes
+│   │   ├── middleware/       # auth, validate, error handler
+│   │   └── result.ts         # neverthrow Result type + DomainError
+│   ├── tests/
+│   │   ├── integration/      # Supertest tests (real DB)
+│   │   │   ├── auth.test.ts
+│   │   │   ├── concert.test.ts
+│   │   │   ├── booking.test.ts
+│   │   │   └── voucher.test.ts
+│   │   └── setup/
+│   │       ├── global.ts     # Migrate test DB trước khi chạy suite
+│   │       └── each.ts       # Override DB env sang test DB
+│   ├── app.ts                # Express app bootstrap
+│   └── worker.ts             # Background worker bootstrap (dành cho BullMQ)
+├── .env
+├── .env.example
+├── .gitignore
+├── docker-compose.test.yml
+├── docker-compose.yml
+├── Dockerfile
+├── drizzle.config.ts
+├── package-lock.json
+├── package.json
+├── README.md
+├── tsconfig.json
+└── vitest.config.ts
 ```
 
 ---
