@@ -128,5 +128,4 @@ npm run db:studio        # Drizzle Studio cho dev DB
 npm run db:migrate:test  # Apply migration lên test DB
 npm run studio:test      # Drizzle Studio cho test DB (port 4984)
 npm test                 # Chạy toàn bộ test
-npm run test:coverage    # Test + coverage report
 ```
