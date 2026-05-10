@@ -106,7 +106,7 @@ npm run dev          # API server tại http://localhost:3000
 npm run dev:worker   # BullMQ worker (xử lý payment + auto-cancel)
 ```
 
-**Swagger UI:** http://localhost:3000/api-docs
+**Swagger UI:** coi tại http://localhost:3000/api-docs sau khi chạy dự án, hoặc file merged-swagger.yml
 
 ---
 
