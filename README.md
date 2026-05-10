@@ -35,7 +35,7 @@ Backend API cho nền tảng đặt vé xem hòa nhạc trực tuyến, bao gồ
 
 ```bash
 git clone <repo-url>
-cd concert-booking
+cd event-ticket-booking-api
 npm install
 ```
 
@@ -52,15 +52,21 @@ NODE_ENV=development
 PORT=3000
 
 DB_HOST=localhost
-DB_PORT=5432
+DB_PORT=5433
 DB_USER=concert_user
 DB_PASSWORD=concert_pass
 DB_NAME=concert_db
+DATABASE_URL=postgresql://concert_user:concert_pass@localhost:5433/concert_db
+
+TEST_DB_HOST=localhost
+TEST_DB_PORT=5434
+TEST_DB_NAME=concert_test_db
+TEST_DATABASE_URL=postgresql://concert_user:concert_pass@localhost:5434/concert_test_db
 
 REDIS_HOST=localhost
 REDIS_PORT=6379
 
-JWT_SECRET=this-is-a-super-secret-key-change-in-prod-32chars
+JWT_SECRET=supersecretkey
 JWT_EXPIRES_IN=7d
 ```
 
