@@ -1,7 +1,7 @@
 info:
-  name: Login
+  name: Login (Admin)
   type: http
-  seq: 1
+  seq: 4
 
 http:
   method: POST
@@ -10,7 +10,7 @@ http:
     type: json
     data: |-
       {
-        "email": "test@gmail.com",
+        "email": "admin@gmail.com",
         "password": "12345678"
       }
   auth: inherit
@@ -20,7 +20,7 @@ runtime:
     - type: after-response
       code: |-
         var data = res.getBody();
-        bru.setVar("accessToken", data.data.accessToken);
+        bru.setVar("accessTokenAdmin", data.data.accessToken);
 
 settings:
   encodeUrl: true

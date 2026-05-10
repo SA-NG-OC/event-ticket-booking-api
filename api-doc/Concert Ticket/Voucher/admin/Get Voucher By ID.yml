@@ -1,11 +1,11 @@
 info:
-  name: Publish concert
+  name: Get Voucher By ID
   type: http
   seq: 3
 
 http:
-  method: PATCH
-  url: "{{baseUrl}}/concerts/{{concertDraft}}/publish"
+  method: GET
+  url: "{{baseUrl}}/vouchers/{{voucherId}}"
   auth: inherit
 
 settings:

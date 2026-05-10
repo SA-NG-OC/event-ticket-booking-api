@@ -14,6 +14,7 @@ import { errorMiddleware } from "@/shared/middleware/error.middleware";
 import { authRoutes } from "@/modules/auth/interface/auth.routes";
 import { concertRoutes } from "@/modules/concert/interface/concert.routes";
 import { bookingRoutes } from "./modules/booking/interface/booking.routes";
+import { voucherRoutes } from "./modules/voucher/interface/voucher.routes";
 
 // import { bookingRoutes } from "@/modules/booking/interface/booking.routes";
 // import { voucherRoutes } from "@/modules/voucher/interface/voucher.routes";
@@ -45,7 +46,7 @@ app.use("/auth", authRoutes);
 app.use("/concerts", concertRoutes);
 
 app.use("/bookings", bookingRoutes);
-// app.use("/vouchers", voucherRoutes);
+app.use("/vouchers", voucherRoutes);
 // app.use("/ops", opsRoutes);
 
 // ── Health Check ──────────────────────────────────────────────────────────────

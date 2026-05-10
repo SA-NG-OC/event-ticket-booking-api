@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { ok, err, Result, DomainErrors, DomainError } from "@/shared/result";
 import { db } from "@/infrastructure/db";
 import { Booking, BookingProps } from "../domain/booking.entity";
-import { Voucher, VoucherProps } from "../domain/voucher.entity";
+import { Voucher, VoucherProps } from "../../voucher/domain/voucher.entity";
 import { Concert, TicketTier, TicketTierProps } from "@/modules/concert/domain/concert.entity";
 import { IBookingRepository, IBookingTxRepository, ListBookingsFilter } from "../domain/booking.repository.interface";
 import { IConcertRepository } from "@/modules/concert/domain/concert.repository.interface";

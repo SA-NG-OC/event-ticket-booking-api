@@ -5,3 +5,8 @@ info:
 
 request:
   auth: inherit
+  variables:
+    - name: concertId
+      value: 4aa6ebbf-4aa8-4f1d-9568-10e03e5ee77b
+    - name: concertDraft
+      value: e3420f72-4674-49a9-ae9c-56d63128c502

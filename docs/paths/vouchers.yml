@@ -1,0 +1,559 @@
+/vouchers:
+  post:
+    tags: [Vouchers (Admin)]
+    summary: Create a new voucher campaign (admin)
+    description: |
+      **Scope rules:**
+      - Omit `concertId` → voucher applies to all concerts.
+      - Provide `concertId` → voucher is restricted to that concert only.
+
+      **Code format:** 3–50 uppercase alphanumeric characters (`A-Z`, `0-9`, `_`, `-`).
+
+      **Percentage cap:** `discountValue` must be 1–100 when `discountType = percentage`.
+    security: [{ bearerAuth: [] }]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/CreateVoucherRequest" }
+          examples:
+            global_percentage:
+              summary: Global 10% off
+              value:
+                name: "Flash Sale 10%"
+                code: "FLASHSALE10"
+                discountType: "percentage"
+                discountValue: 10
+                maxUses: 500
+                minOrderValue: 500000
+                expiresAt: "2099-12-31T23:59:59.000Z"
+                concertId: "fb353d72-13c5-42c2-b35e-62607018d5f0"
+            concert_fixed:
+              summary: VIP 200k off (scoped to one concert)
+              value:
+                name: "VIP Discount"
+                code: "VIP200K"
+                discountType: "fixed"
+                discountValue: 200000
+                maxUses: 100
+                minOrderValue: 2000000
+                concertId: "c1b2c3d4-0000-0000-0000-000000000001"
+    responses:
+      "201":
+        description: Voucher campaign created
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success: { type: boolean, example: true }
+                data: { $ref: "#/components/schemas/Voucher" }
+            example:
+              success: true
+              data:
+                id: "v1b2c3d4-0000-0000-0000-000000000001"
+                name: "Flash Sale 10%"
+                code: "FLASHSALE10"
+                discountType: "percentage"
+                discountValue: 10
+                maxUses: 500
+                usedCount: 0
+                remainingUses: 500
+                minOrderValue: 500000
+                expiresAt: "2099-12-31T23:59:59.000Z"
+                concertId: null
+                isExpired: false
+                isExhausted: false
+                createdAt: "2025-06-01T08:00:00.000Z"
+      "400":
+        description: Validation error
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            examples:
+              bad_code_format:
+                summary: Invalid code format
+                value: { success: false, type: "VALIDATION", message: "Code must be 3–50 uppercase alphanumeric characters (A-Z, 0-9, _, -)" }
+              percentage_over_100:
+                summary: Percentage exceeds 100
+                value: { success: false, type: "VALIDATION", message: "Percentage discount cannot exceed 100" }
+              zero_discount:
+                summary: Discount value is zero
+                value: { success: false, type: "VALIDATION", message: "discountValue must be greater than 0" }
+              max_uses_zero:
+                summary: maxUses less than 1
+                value: { success: false, type: "VALIDATION", message: "maxUses must be at least 1" }
+              negative_min_order:
+                summary: Negative minOrderValue
+                value: { success: false, type: "VALIDATION", message: "minOrderValue must be 0 or greater" }
+              code_too_short:
+                summary: Code shorter than 3 chars
+                value: { success: false, type: "VALIDATION", message: "code must be at least 3 characters" }
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "UNAUTHORIZED", message: "Missing or invalid Authorization header" }
+      "403":
+        description: Admin access required
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "FORBIDDEN", message: "Admin access required" }
+      "404":
+        description: Concert not found (when concertId provided)
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "NOT_FOUND", message: "Concert not found" }
+      "409":
+        description: Voucher code already exists
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "CONFLICT", message: "Voucher code 'FLASHSALE10' already exists" }
+      "422":
+        description: Domain rule violation (e.g. past expiresAt)
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "BUSINESS_RULE", message: "Expiry date must be in the future" }
+
+  get:
+    tags: [Vouchers (Admin)]
+    summary: List all voucher campaigns (admin)
+    security: [{ bearerAuth: [] }]
+    parameters:
+      - in: query
+        name: concertId
+        schema: { type: string, format: uuid }
+        required: false
+        example: "c1b2c3d4-0000-0000-0000-000000000001"
+        description: "Filter by scoped concert. Omit for all."
+      - in: query
+        name: page
+        schema: { type: integer, minimum: 1, default: 1, example: 1 }
+      - in: query
+        name: limit
+        schema: { type: integer, minimum: 1, maximum: 100, default: 20, example: 20 }
+    responses:
+      "200":
+        description: Paginated list of voucher campaigns
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VoucherListResponse" }
+            example:
+              success: true
+              data:
+                vouchers:
+                  - id: "v1b2c3d4-0000-0000-0000-000000000001"
+                    name: "Flash Sale 10%"
+                    code: "FLASHSALE10"
+                    discountType: "percentage"
+                    discountValue: 10
+                    maxUses: 500
+                    usedCount: 42
+                    remainingUses: 458
+                    minOrderValue: 500000
+                    expiresAt: "2099-12-31T23:59:59.000Z"
+                    concertId: null
+                    isExpired: false
+                    isExhausted: false
+                    createdAt: "2025-06-01T08:00:00.000Z"
+                  - id: "v2b2c3d4-0000-0000-0000-000000000002"
+                    name: "Global Voucher 2"
+                    code: "GLOBAL2"
+                    discountType: "percentage"
+                    discountValue: 10
+                    maxUses: 100
+                    usedCount: 0
+                    remainingUses: 100
+                    minOrderValue: 0
+                    expiresAt: null
+                    concertId: null
+                    isExpired: false
+                    isExhausted: false
+                    createdAt: "2025-06-01T08:00:00.000Z"
+                  - id: "v3b2c3d4-0000-0000-0000-000000000003"
+                    name: "Scoped Voucher"
+                    code: "SCOPED1"
+                    discountType: "percentage"
+                    discountValue: 10
+                    maxUses: 100
+                    usedCount: 0
+                    remainingUses: 100
+                    minOrderValue: 0
+                    expiresAt: null
+                    concertId: "c1b2c3d4-0000-0000-0000-000000000001"
+                    isExpired: false
+                    isExhausted: false
+                    createdAt: "2025-06-01T08:00:00.000Z"
+                total: 3
+                page: 1
+                limit: 20
+      "403":
+        description: Admin access required
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "FORBIDDEN", message: "Admin access required" }
+
+/vouchers/preview:
+  get:
+    tags: [Vouchers (Customer)]
+    summary: Preview voucher discount before booking
+    description: |
+      Validates the voucher and returns the calculated discount without consuming usage.
+      Use this to show users the discount in the booking UI before they confirm.
+
+      **Note:** This does NOT reserve or consume the voucher. The actual usage count
+      increments only when a booking is created successfully.
+    security: [{ bearerAuth: [] }]
+    parameters:
+      - in: query
+        name: code
+        required: true
+        schema: { type: string, minLength: 1 }
+        example: "FLASHSALE10"
+      - in: query
+        name: orderAmount
+        required: true
+        schema: { type: number, exclusiveMinimum: 0 }
+        example: 2000000
+        description: "Total order amount (unitPrice × quantity) in VND, before discount"
+      - in: query
+        name: concertId
+        required: true
+        schema: { type: string, format: uuid }
+        example: "c1b2c3d4-0000-0000-0000-000000000001"
+    responses:
+      "200":
+        description: Discount preview
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success: { type: boolean, example: true }
+                data: { $ref: "#/components/schemas/VoucherPreview" }
+            examples:
+              percentage:
+                summary: 10% off a 2M order
+                value:
+                  success: true
+                  data:
+                    code: "PREVIEW10"
+                    discountType: "percentage"
+                    discountAmount: 200000
+                    finalAmount: 1800000
+                    description: "10% off"
+              fixed:
+                summary: 100k fixed off
+                value:
+                  success: true
+                  data:
+                    code: "FIXED100K"
+                    discountType: "fixed"
+                    discountAmount: 100000
+                    finalAmount: 1900000
+                    description: "100,000 VND off"
+              fixed_capped:
+                summary: Fixed discount capped at orderAmount (finalAmount = 0)
+                value:
+                  success: true
+                  data:
+                    code: "FIXED100K"
+                    discountType: "fixed"
+                    discountAmount: 50000
+                    finalAmount: 0
+                    description: "100,000 VND off"
+              scoped_match:
+                summary: Scoped voucher matching concert (15% off)
+                value:
+                  success: true
+                  data:
+                    code: "SCOPED"
+                    discountType: "percentage"
+                    discountAmount: 150000
+                    finalAmount: 850000
+                    description: "15% off"
+      "400":
+        description: Missing or invalid query parameters
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            examples:
+              missing_concert_id:
+                summary: Missing concertId
+                value: { success: false, type: "VALIDATION", message: "concertId is required" }
+              negative_amount:
+                summary: Negative orderAmount
+                value: { success: false, type: "VALIDATION", message: "orderAmount must be positive" }
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "UNAUTHORIZED", message: "Missing or invalid Authorization header" }
+      "404":
+        description: Voucher code not found
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "NOT_FOUND", message: "Voucher not found" }
+      "422":
+        description: Voucher not applicable
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            examples:
+              expired:
+                summary: Voucher expired
+                value: { success: false, type: "BUSINESS_RULE", message: "Voucher has expired" }
+              exhausted:
+                summary: Usage limit reached
+                value: { success: false, type: "BUSINESS_RULE", message: "Voucher has reached maximum usage limit" }
+              min_order:
+                summary: Order below minimum
+                value: { success: false, type: "BUSINESS_RULE", message: "Minimum order value for this voucher is 500000" }
+              wrong_concert:
+                summary: Scoped to different concert
+                value: { success: false, type: "BUSINESS_RULE", message: "Voucher is not valid for this concert" }
+
+/vouchers/{id}:
+  get:
+    tags: [Vouchers (Admin)]
+    summary: Get voucher campaign detail (admin)
+    security: [{ bearerAuth: [] }]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string, format: uuid }
+        example: "v1b2c3d4-0000-0000-0000-000000000001"
+    responses:
+      "200":
+        description: Voucher detail with usage stats
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success: { type: boolean, example: true }
+                data: { $ref: "#/components/schemas/Voucher" }
+            example:
+              success: true
+              data:
+                id: "v1b2c3d4-0000-0000-0000-000000000001"
+                name: "Flash Sale 10%"
+                code: "DETAIL1"
+                discountType: "percentage"
+                discountValue: 10
+                maxUses: 100
+                usedCount: 0
+                remainingUses: 100
+                minOrderValue: 0
+                expiresAt: null
+                concertId: null
+                isExpired: false
+                isExhausted: false
+                createdAt: "2025-06-01T08:00:00.000Z"
+      "400":
+        description: Invalid UUID format
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "VALIDATION", message: "Invalid voucher ID" }
+      "404":
+        description: Voucher not found
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "NOT_FOUND", message: "Voucher campaign not found" }
+
+  patch:
+    tags: [Vouchers (Admin)]
+    summary: Update voucher campaign (admin)
+    description: |
+      Only `name`, `maxUses`, and `expiresAt` can be updated.
+
+      **Immutable fields:** `code`, `discountType`, `discountValue`, `concertId`, `minOrderValue`
+      — changing these would break audit trails for existing bookings.
+
+      **maxUses rule:** Cannot be decreased below current `usedCount`.
+
+      **expiresAt:** Send `null` to remove expiry entirely.
+    security: [{ bearerAuth: [] }]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string, format: uuid }
+        example: "v1b2c3d4-0000-0000-0000-000000000001"
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/UpdateVoucherRequest" }
+          examples:
+            update_name:
+              summary: Update name only
+              value: { name: "Updated Name" }
+            increase_max_uses:
+              summary: Increase maxUses
+              value: { maxUses: 200 }
+            set_expiry:
+              summary: Set future expiresAt
+              value: { expiresAt: "2099-06-01T00:00:00.000Z" }
+            remove_expiry:
+              summary: Remove expiry date (never expires)
+              value: { expiresAt: null }
+    responses:
+      "200":
+        description: Voucher updated — returns full voucher object
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success: { type: boolean, example: true }
+                data: { $ref: "#/components/schemas/Voucher" }
+            examples:
+              update_name:
+                summary: After name update
+                value:
+                  success: true
+                  data:
+                    id: "v1b2c3d4-0000-0000-0000-000000000001"
+                    name: "Updated Name"
+                    code: "UPDATEME1"
+                    discountType: "percentage"
+                    discountValue: 10
+                    maxUses: 100
+                    usedCount: 0
+                    remainingUses: 100
+                    minOrderValue: 0
+                    expiresAt: null
+                    concertId: null
+                    isExpired: false
+                    isExhausted: false
+                    createdAt: "2025-06-01T08:00:00.000Z"
+              increase_max_uses:
+                summary: After maxUses increase to 200
+                value:
+                  success: true
+                  data:
+                    id: "v1b2c3d4-0000-0000-0000-000000000001"
+                    name: "Test Voucher"
+                    code: "UPDATEME2"
+                    discountType: "percentage"
+                    discountValue: 10
+                    maxUses: 200
+                    usedCount: 0
+                    remainingUses: 200
+                    minOrderValue: 0
+                    expiresAt: null
+                    concertId: null
+                    isExpired: false
+                    isExhausted: false
+                    createdAt: "2025-06-01T08:00:00.000Z"
+              remove_expiry:
+                summary: After removing expiresAt
+                value:
+                  success: true
+                  data:
+                    id: "v1b2c3d4-0000-0000-0000-000000000001"
+                    name: "Test Voucher"
+                    code: "UPDATEME4"
+                    discountType: "percentage"
+                    discountValue: 10
+                    maxUses: 100
+                    usedCount: 0
+                    remainingUses: 100
+                    minOrderValue: 0
+                    expiresAt: null
+                    concertId: null
+                    isExpired: false
+                    isExhausted: false
+                    createdAt: "2025-06-01T08:00:00.000Z"
+      "400":
+        description: Validation error or empty body
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            examples:
+              empty_body:
+                value: { success: false, type: "VALIDATION", message: "At least one field must be provided for update" }
+              short_name:
+                value: { success: false, type: "VALIDATION", message: "Voucher name must be at least 2 characters" }
+      "403":
+        description: Admin access required
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "FORBIDDEN", message: "Admin access required" }
+      "404":
+        description: Voucher not found
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "NOT_FOUND", message: "Voucher campaign not found" }
+      "422":
+        description: Business rule violation
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            examples:
+              max_uses_below_used:
+                summary: maxUses below usedCount
+                value: { success: false, type: "BUSINESS_RULE", message: "maxUses cannot be less than current usedCount (5)" }
+              past_expiry:
+                summary: Past expiry date
+                value: { success: false, type: "BUSINESS_RULE", message: "Expiry date must be in the future" }
+
+  delete:
+    tags: [Vouchers (Admin)]
+    summary: Delete voucher campaign (admin)
+    description: |
+      **Only allowed when `usedCount = 0`** (no one has used it yet).
+
+      If the voucher has already been used, deactivate it instead by setting
+      `expiresAt` to a past-equivalent future date via `PATCH`.
+    security: [{ bearerAuth: [] }]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string, format: uuid }
+        example: "v1b2c3d4-0000-0000-0000-000000000001"
+    responses:
+      "204":
+        description: Voucher deleted successfully (no body)
+      "400":
+        description: Invalid UUID format
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "VALIDATION", message: "Invalid voucher ID" }
+      "403":
+        description: Admin access required
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "FORBIDDEN", message: "Admin access required" }
+      "404":
+        description: Voucher not found
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "NOT_FOUND", message: "Voucher campaign not found" }
+      "422":
+        description: Voucher has been used — cannot delete
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example:
+              success: false
+              type: "BUSINESS_RULE"
+              message: "Cannot delete voucher that has been used 1 time(s). Deactivate by setting expiresAt to a past date instead."

@@ -1,0 +1,28 @@
+info:
+  name: Create Voucher
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/vouchers"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Giảm 20% cho concert mùa hè",
+        "code": "SUMMER200",
+        "discountType": "percentage",
+        "discountValue": 20,
+        "maxUses": 100,
+        "minOrderValue": 200000,
+        "expiresAt": "2026-12-31T23:59:59.000Z",
+        "concertId": "e2e3f4d1-d6e3-4c78-9513-76d7afedd999"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

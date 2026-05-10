@@ -5,6 +5,7 @@ import path from "path";
 export default defineConfig({
     test: {
         globals: true,
+        fileParallelism: false,
         environment: "node",
         globalSetup: "./src/tests/setup/global.ts",
         setupFiles: ["./src/tests/setup/each.ts"],

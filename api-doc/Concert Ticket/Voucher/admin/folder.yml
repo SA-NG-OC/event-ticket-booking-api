@@ -1,0 +1,14 @@
+info:
+  name: admin
+  type: folder
+  seq: 1
+
+request:
+  auth:
+    type: bearer
+    token: "{{accessTokenAdmin}}"
+  variables:
+    - name: voucherId
+      value: 72e91ee4-7c03-4e22-8e15-96d66e783778
+    - name: concertId
+      value: e2e3f4d1-d6e3-4c78-9513-76d7afedd999

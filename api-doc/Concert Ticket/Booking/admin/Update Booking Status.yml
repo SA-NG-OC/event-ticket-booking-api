@@ -10,9 +10,14 @@ http:
     type: json
     data: |-
       {
-          "status": "confirmed"
+          "status": "failed"
       }
   auth: inherit
+
+runtime:
+  variables:
+    - name: bookingId
+      value: 37d07444-21ef-4301-a81c-b773ab6b9a79
 
 settings:
   encodeUrl: true

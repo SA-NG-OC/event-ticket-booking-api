@@ -1,18 +1,16 @@
 info:
-  name: Register
+  name: Update Voucher
   type: http
-  seq: 2
+  seq: 5
 
 http:
-  method: POST
-  url: "{{baseUrl}}/auth/register"
+  method: PATCH
+  url: "{{baseUrl}}/vouchers/{{voucherId}}"
   body:
     type: json
     data: |-
       {
-        "email": "test2@gmail.com",
-        "password": "12345678",
-        "name": "Sang"
+        "name": "Updated Name"
       }
   auth: inherit
 

@@ -2,13 +2,17 @@ import { describe, it, expect, beforeEach, afterAll } from "vitest";
 import request from "supertest";
 import { app } from "@/app";
 import { db } from "@/infrastructure/db";
-import { users } from "@/infrastructure/db/schema";
+import { bookings, concerts, ticketTiers, users, voucherCampaigns } from "@/infrastructure/db/schema";
 
 beforeEach(async () => {
     await db.delete(users);
 });
 
 afterAll(async () => {
+    await db.delete(bookings);
+    await db.delete(ticketTiers);
+    await db.delete(voucherCampaigns);
+    await db.delete(concerts);
     await db.delete(users);
 });
 

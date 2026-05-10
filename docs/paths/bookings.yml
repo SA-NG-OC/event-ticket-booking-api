@@ -1,13 +1,94 @@
 /bookings:
+  get:
+    tags: [Bookings (Admin)]
+    summary: List all bookings with filters (admin)
+    security: [{ bearerAuth: [] }]
+    parameters:
+      - in: query
+        name: userId
+        schema: { type: string, format: uuid }
+        example: "54c9aa07-ee4b-45e2-beb1-4944dfa72b9d"
+      - in: query
+        name: concertId
+        schema: { type: string, format: uuid }
+        example: "fb353d72-13c5-42c2-b35e-62607018d5f0"
+      - in: query
+        name: status
+        schema: { type: string, enum: [pending, confirmed, cancelled, failed] }
+        example: cancelled
+      - in: query
+        name: isFlagged
+        schema: { type: string, enum: ["true", "false"] }
+        example: "true"
+      - in: query
+        name: page
+        schema: { type: integer, minimum: 1, default: 1 }
+        example: 1
+      - in: query
+        name: limit
+        schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        example: 10
+    responses:
+      "200":
+        description: Paginated list of all bookings
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BookingListResponse" }
+            example:
+              success: true
+              data:
+                bookings:
+                  - id: "0129350f-a477-48f2-84e9-bd815d04feae"
+                    userId: "54c9aa07-ee4b-45e2-beb1-4944dfa72b9d"
+                    ticketTierId: "bce7708f-8eb9-4562-96de-70175956c0b0"
+                    concertId: "fb353d72-13c5-42c2-b35e-62607018d5f0"
+                    quantity: 2
+                    unitPrice: 3500000
+                    totalAmount: 7000000
+                    discountAmount: 0
+                    finalAmount: 7000000
+                    voucherCode: null
+                    status: confirmed
+                    idempotencyKey: "cf52e84c-b978-4702-bfc8-2fcdd4be5faa"
+                    isFlagged: false
+                    flagReason: null
+                    createdAt: "2026-05-09T15:04:12.208Z"
+                    updatedAt: "2026-05-09T15:04:14.380Z"
+                  - id: "29033b34-ea66-48b7-bc14-8b748e593d06"
+                    userId: "54c9aa07-ee4b-45e2-beb1-4944dfa72b9d"
+                    ticketTierId: "bce7708f-8eb9-4562-96de-70175956c0b0"
+                    concertId: "fb353d72-13c5-42c2-b35e-62607018d5f0"
+                    quantity: 2
+                    unitPrice: 3500000
+                    totalAmount: 7000000
+                    discountAmount: 0
+                    finalAmount: 7000000
+                    voucherCode: null
+                    status: confirmed
+                    idempotencyKey: "cf52e84c-b978-4702-bfc8-2fcdd4be5fad"
+                    isFlagged: false
+                    flagReason: null
+                    createdAt: "2026-05-09T14:46:18.221Z"
+                    updatedAt: "2026-05-09T14:46:20.327Z"
+                total: 2
+                page: 1
+                limit: 20
+      "403":
+        description: Admin access required
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+            example: { success: false, type: "FORBIDDEN", message: "Admin access required" }
+
   post:
     tags: [Bookings (Customer)]
     summary: Create a new booking
     description: |
       Creates a booking with oversell protection (SELECT FOR UPDATE on ticket tier).
-      
+
       **Idempotency:** Send the same `idempotencyKey` UUID on retry — the original booking
       is returned without creating a duplicate.
-      
+
       **Async payment:** After creation, a background job simulates payment (2s delay).
       Poll `GET /bookings/{id}` to check if status changed to `confirmed` or `failed`.
     security: [{ bearerAuth: [] }]
@@ -17,10 +98,10 @@
         application/json:
           schema: { $ref: "#/components/schemas/CreateBookingRequest" }
           example:
-            ticketTierId: "t1b2c3d4-0000-0000-0000-000000000001"
+            ticketTierId: "bce7708f-8eb9-4562-96de-70175956c0b0"
             quantity: 2
-            voucherCode: "FLASHSALE10"
-            idempotencyKey: "e7f8a9b0-1111-2222-3333-444455556666"
+            voucherCode: null
+            idempotencyKey: "cf52e84c-b978-4702-bfc8-2fcdd4be5faa"
     responses:
       "201":
         description: Booking created (status = pending, payment processing async)
@@ -34,22 +115,22 @@
             example:
               success: true
               data:
-                id: "a1b2c3d4-0000-0000-0000-000000000001"
-                userId: "u1b2c3d4-0000-0000-0000-000000000001"
-                ticketTierId: "t1b2c3d4-0000-0000-0000-000000000001"
-                concertId: "c1b2c3d4-0000-0000-0000-000000000001"
+                id: "0129350f-a477-48f2-84e9-bd815d04feae"
+                userId: "54c9aa07-ee4b-45e2-beb1-4944dfa72b9d"
+                ticketTierId: "bce7708f-8eb9-4562-96de-70175956c0b0"
+                concertId: "fb353d72-13c5-42c2-b35e-62607018d5f0"
                 quantity: 2
-                unitPrice: 1500000
-                totalAmount: 3000000
-                discountAmount: 300000
-                finalAmount: 2700000
-                voucherCode: "FLASHSALE10"
-                status: "pending"
-                idempotencyKey: "e7f8a9b0-1111-2222-3333-444455556666"
+                unitPrice: 3500000
+                totalAmount: 7000000
+                discountAmount: 0
+                finalAmount: 7000000
+                voucherCode: null
+                status: pending
+                idempotencyKey: "cf52e84c-b978-4702-bfc8-2fcdd4be5faa"
                 isFlagged: false
                 flagReason: null
-                createdAt: "2025-06-01T10:00:00.000Z"
-                updatedAt: "2025-06-01T10:00:00.000Z"
+                createdAt: "2026-05-09T15:04:12.208Z"
+                updatedAt: "2026-05-09T15:04:12.208Z"
       "400":
         description: Validation error
         content:
@@ -118,12 +199,39 @@
               success: true
               data:
                 bookings:
-                  - id: "a1b2c3d4-0000-0000-0000-000000000001"
-                    status: confirmed
+                  - id: "0129350f-a477-48f2-84e9-bd815d04feae"
+                    userId: "54c9aa07-ee4b-45e2-beb1-4944dfa72b9d"
+                    ticketTierId: "bce7708f-8eb9-4562-96de-70175956c0b0"
+                    concertId: "fb353d72-13c5-42c2-b35e-62607018d5f0"
                     quantity: 2
-                    finalAmount: 2700000
-                    createdAt: "2025-06-01T10:00:00.000Z"
-                total: 1
+                    unitPrice: 3500000
+                    totalAmount: 7000000
+                    discountAmount: 0
+                    finalAmount: 7000000
+                    voucherCode: null
+                    status: confirmed
+                    idempotencyKey: "cf52e84c-b978-4702-bfc8-2fcdd4be5faa"
+                    isFlagged: false
+                    flagReason: null
+                    createdAt: "2026-05-09T15:04:12.208Z"
+                    updatedAt: "2026-05-09T15:04:14.380Z"
+                  - id: "29033b34-ea66-48b7-bc14-8b748e593d06"
+                    userId: "54c9aa07-ee4b-45e2-beb1-4944dfa72b9d"
+                    ticketTierId: "bce7708f-8eb9-4562-96de-70175956c0b0"
+                    concertId: "fb353d72-13c5-42c2-b35e-62607018d5f0"
+                    quantity: 2
+                    unitPrice: 3500000
+                    totalAmount: 7000000
+                    discountAmount: 0
+                    finalAmount: 7000000
+                    voucherCode: null
+                    status: confirmed
+                    idempotencyKey: "cf52e84c-b978-4702-bfc8-2fcdd4be5fad"
+                    isFlagged: false
+                    flagReason: null
+                    createdAt: "2026-05-09T14:46:18.221Z"
+                    updatedAt: "2026-05-09T14:46:20.327Z"
+                total: 2
                 page: 1
                 limit: 20
       "401":
@@ -144,7 +252,7 @@
         name: id
         required: true
         schema: { type: string, format: uuid }
-        example: "a1b2c3d4-0000-0000-0000-000000000001"
+        example: "0129350f-a477-48f2-84e9-bd815d04feae"
     responses:
       "200":
         description: Booking detail
@@ -155,6 +263,25 @@
               properties:
                 success: { type: boolean, example: true }
                 data: { $ref: "#/components/schemas/Booking" }
+            example:
+              success: true
+              data:
+                id: "0129350f-a477-48f2-84e9-bd815d04feae"
+                userId: "54c9aa07-ee4b-45e2-beb1-4944dfa72b9d"
+                ticketTierId: "bce7708f-8eb9-4562-96de-70175956c0b0"
+                concertId: "fb353d72-13c5-42c2-b35e-62607018d5f0"
+                quantity: 2
+                unitPrice: 3500000
+                totalAmount: 7000000
+                discountAmount: 0
+                finalAmount: 7000000
+                voucherCode: null
+                status: confirmed
+                idempotencyKey: "cf52e84c-b978-4702-bfc8-2fcdd4be5faa"
+                isFlagged: false
+                flagReason: null
+                createdAt: "2026-05-09T15:04:12.208Z"
+                updatedAt: "2026-05-09T15:04:14.380Z"
       "403":
         description: Forbidden — viewing another user's booking
         content:
@@ -181,7 +308,7 @@
         name: id
         required: true
         schema: { type: string, format: uuid }
-        example: "a1b2c3d4-0000-0000-0000-000000000001"
+        example: "2e55099b-60c3-4f6e-a8a4-927893e06b60"
     responses:
       "200":
         description: Booking cancelled
@@ -195,9 +322,22 @@
             example:
               success: true
               data:
-                id: "a1b2c3d4-0000-0000-0000-000000000001"
+                id: "2e55099b-60c3-4f6e-a8a4-927893e06b60"
+                userId: "c83ee176-4733-4a8a-905a-e2b0ebeb20df"
+                ticketTierId: "bce7708f-8eb9-4562-96de-70175956c0b0"
+                concertId: "fb353d72-13c5-42c2-b35e-62607018d5f0"
+                quantity: 2
+                unitPrice: 3500000
+                totalAmount: 7000000
+                discountAmount: 0
+                finalAmount: 7000000
+                voucherCode: null
                 status: cancelled
-                updatedAt: "2025-06-01T11:00:00.000Z"
+                idempotencyKey: "cf52e84c-b978-4702-bfc8-2fcdd4be5fad"
+                isFlagged: false
+                flagReason: null
+                createdAt: "2026-05-09T14:04:39.923Z"
+                updatedAt: "2026-05-09T14:06:24.945Z"
       "403":
         description: Forbidden — cancelling another user's booking
         content:
@@ -227,7 +367,7 @@
         name: id
         required: true
         schema: { type: string, format: uuid }
-        example: "a1b2c3d4-0000-0000-0000-000000000001"
+        example: "0129350f-a477-48f2-84e9-bd815d04feae"
     requestBody:
       required: true
       content:
@@ -244,6 +384,25 @@
               properties:
                 success: { type: boolean, example: true }
                 data: { $ref: "#/components/schemas/Booking" }
+            example:
+              success: true
+              data:
+                id: "0129350f-a477-48f2-84e9-bd815d04feae"
+                userId: "54c9aa07-ee4b-45e2-beb1-4944dfa72b9d"
+                ticketTierId: "bce7708f-8eb9-4562-96de-70175956c0b0"
+                concertId: "fb353d72-13c5-42c2-b35e-62607018d5f0"
+                quantity: 2
+                unitPrice: 3500000
+                totalAmount: 7000000
+                discountAmount: 0
+                finalAmount: 7000000
+                voucherCode: null
+                status: confirmed
+                idempotencyKey: "cf52e84c-b978-4702-bfc8-2fcdd4be5faa"
+                isFlagged: false
+                flagReason: null
+                createdAt: "2026-05-09T15:04:12.208Z"
+                updatedAt: "2026-05-09T15:04:14.380Z"
       "400":
         description: Validation error
         content:
@@ -273,7 +432,7 @@
         name: id
         required: true
         schema: { type: string, format: uuid }
-        example: "a1b2c3d4-0000-0000-0000-000000000001"
+        example: "0129350f-a477-48f2-84e9-bd815d04feae"
     requestBody:
       required: true
       content:
@@ -282,7 +441,7 @@
           example: { reason: "User made 5 bookings within 1 minute — suspected bot" }
     responses:
       "200":
-        description: Booking flagged
+        description: Booking flagged — returns full booking object
         content:
           application/json:
             schema:
@@ -293,9 +452,22 @@
             example:
               success: true
               data:
-                id: "a1b2c3d4-0000-0000-0000-000000000001"
+                id: "0129350f-a477-48f2-84e9-bd815d04feae"
+                userId: "54c9aa07-ee4b-45e2-beb1-4944dfa72b9d"
+                ticketTierId: "bce7708f-8eb9-4562-96de-70175956c0b0"
+                concertId: "fb353d72-13c5-42c2-b35e-62607018d5f0"
+                quantity: 2
+                unitPrice: 3500000
+                totalAmount: 7000000
+                discountAmount: 0
+                finalAmount: 7000000
+                voucherCode: null
+                status: confirmed
+                idempotencyKey: "cf52e84c-b978-4702-bfc8-2fcdd4be5faa"
                 isFlagged: true
                 flagReason: "User made 5 bookings within 1 minute — suspected bot"
+                createdAt: "2026-05-09T15:04:12.208Z"
+                updatedAt: "2026-05-09T17:13:02.803Z"
       "404":
         description: Booking not found
         content:
@@ -313,10 +485,10 @@
         name: id
         required: true
         schema: { type: string, format: uuid }
-        example: "a1b2c3d4-0000-0000-0000-000000000001"
+        example: "0129350f-a477-48f2-84e9-bd815d04feae"
     responses:
       "200":
-        description: Flag removed
+        description: Flag removed — returns full booking object
         content:
           application/json:
             schema:
@@ -327,56 +499,25 @@
             example:
               success: true
               data:
-                id: "a1b2c3d4-0000-0000-0000-000000000001"
+                id: "0129350f-a477-48f2-84e9-bd815d04feae"
+                userId: "54c9aa07-ee4b-45e2-beb1-4944dfa72b9d"
+                ticketTierId: "bce7708f-8eb9-4562-96de-70175956c0b0"
+                concertId: "fb353d72-13c5-42c2-b35e-62607018d5f0"
+                quantity: 2
+                unitPrice: 3500000
+                totalAmount: 7000000
+                discountAmount: 0
+                finalAmount: 7000000
+                voucherCode: null
+                status: confirmed
+                idempotencyKey: "cf52e84c-b978-4702-bfc8-2fcdd4be5faa"
                 isFlagged: false
                 flagReason: null
+                createdAt: "2026-05-09T15:04:12.208Z"
+                updatedAt: "2026-05-09T17:13:28.691Z"
       "404":
         description: Booking not found
         content:
           application/json:
             schema: { $ref: "#/components/schemas/ErrorResponse" }
             example: { success: false, type: "NOT_FOUND", message: "Booking not found" }
-
-# NOTE: /bookings (admin GET) — endpoint list all bookings cho admin
-# bị bỏ vì path trùng với POST /bookings ở trên.
-# Thực tế cùng path /bookings nên gộp GET + POST vào cùng key:
-/bookings-admin:
-  get:
-    tags: [Bookings (Admin)]
-    summary: List all bookings with filters (admin)
-    security: [{ bearerAuth: [] }]
-    parameters:
-      - in: query
-        name: userId
-        schema: { type: string, format: uuid }
-        example: "u1b2c3d4-0000-0000-0000-000000000001"
-      - in: query
-        name: concertId
-        schema: { type: string, format: uuid }
-        example: "c1b2c3d4-0000-0000-0000-000000000001"
-      - in: query
-        name: status
-        schema: { type: string, enum: [pending, confirmed, cancelled, failed] }
-        example: pending
-      - in: query
-        name: isFlagged
-        schema: { type: string, enum: ["true", "false"] }
-        example: "true"
-      - in: query
-        name: page
-        schema: { type: integer, minimum: 1, default: 1 }
-      - in: query
-        name: limit
-        schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
-    responses:
-      "200":
-        description: Paginated list of all bookings
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/BookingListResponse" }
-      "403":
-        description: Admin access required
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/ErrorResponse" }
-            example: { success: false, type: "FORBIDDEN", message: "Admin access required" }

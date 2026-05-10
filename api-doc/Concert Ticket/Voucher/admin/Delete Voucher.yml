@@ -1,0 +1,20 @@
+info:
+  name: Delete Voucher
+  type: http
+  seq: 6
+
+http:
+  method: DELETE
+  url: "{{baseUrl}}/vouchers/{{voucherIdDelete}}"
+  auth: inherit
+
+runtime:
+  variables:
+    - name: voucherIdDelete
+      value: 72e91ee4-7c03-4e22-8e15-96d66e783778
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

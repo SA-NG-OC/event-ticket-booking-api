@@ -5,7 +5,7 @@ info:
 
 http:
   method: PATCH
-  url: "{{baseUrl}}/bookings/{{bookingId}}/cancel"
+  url: "{{baseUrl}}/bookings/{{bookingIdCancel}}/cancel"
   auth: inherit
 
 settings:

@@ -20,8 +20,14 @@ tags:
     description: Public concert browsing
   - name: Concerts (Admin)
     description: Concert management
-  # - name: Bookings
-  # - name: Vouchers
+  - name: Bookings (Customer)        
+    description: Ticket booking flows
+  - name: Bookings (Admin)          
+    description: Booking management
+  - name: Vouchers (Customer)       
+    description: Voucher preview
+  - name: Vouchers (Admin)           
+    description: Voucher management
 
 components:
   securitySchemes:
@@ -353,3 +359,113 @@ components:
           minLength: 1
           maxLength: 500
           example: "User made 5 bookings within 1 minute — suspected bot"
+    
+    # ── Voucher ──────────────────────────────────────────────────────────────────
+    Voucher:
+      type: object
+      properties:
+        id:            { type: string, format: uuid, example: "v1b2c3d4-0000-0000-0000-000000000001" }
+        name:          { type: string, example: "Flash Sale 10%" }
+        code:          { type: string, example: "FLASHSALE10" }
+        discountType:  { type: string, enum: [percentage, fixed], example: "percentage" }
+        discountValue: { type: number, example: 10 }
+        maxUses:       { type: integer, minimum: 1, example: 500 }
+        usedCount:     { type: integer, example: 42 }
+        remainingUses: { type: integer, example: 458, description: "Computed: maxUses - usedCount" }
+        minOrderValue: { type: number, minimum: 0, example: 500000 }
+        expiresAt:     { type: string, format: date-time, nullable: true, example: "2099-12-31T23:59:59.000Z" }
+        concertId:     { type: string, format: uuid, nullable: true, example: null, description: "null = applies to all concerts" }
+        isExpired:     { type: boolean, example: false, description: "Computed: expiresAt < now" }
+        isExhausted:   { type: boolean, example: false, description: "Computed: usedCount >= maxUses" }
+        createdAt:     { type: string, format: date-time, example: "2025-06-01T08:00:00.000Z" }
+ 
+    VoucherPreview:
+      type: object
+      properties:
+        code:           { type: string, example: "FLASHSALE10" }
+        discountType:   { type: string, enum: [percentage, fixed], example: "percentage" }
+        discountAmount: { type: number, example: 200000, description: "Amount to be deducted" }
+        finalAmount:    { type: number, example: 1800000, description: "orderAmount - discountAmount" }
+        description:    { type: string, example: "10% off" }
+ 
+    CreateVoucherRequest:
+      type: object
+      required: [name, code, discountType, discountValue, maxUses]
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 255
+          example: "Flash Sale 10%"
+        code:
+          type: string
+          minLength: 3
+          maxLength: 50
+          pattern: "^[A-Z0-9_-]{3,50}$"
+          description: "Uppercase alphanumeric only (A-Z, 0-9, _, -)"
+          example: "FLASHSALE10"
+        discountType:
+          type: string
+          enum: [percentage, fixed]
+          example: "percentage"
+        discountValue:
+          type: number
+          exclusiveMinimum: 0
+          description: "For percentage: 1–100. For fixed: any positive number (VND)."
+          example: 10
+        maxUses:
+          type: integer
+          minimum: 1
+          example: 500
+        minOrderValue:
+          type: number
+          minimum: 0
+          default: 0
+          example: 0
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2099-12-31T23:59:59.000Z"
+        concertId:
+          type: string
+          format: uuid
+          nullable: true
+          description: "Scope voucher to one concert. Omit (or null) for all concerts."
+          example: null
+ 
+    UpdateVoucherRequest:
+      type: object
+      description: "At least one field required. Only name, maxUses, expiresAt can be changed."
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 255
+          example: "Flash Sale 10% — Extended"
+        maxUses:
+          type: integer
+          minimum: 1
+          description: "Cannot be set below current usedCount"
+          example: 1000
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: "null = remove expiry. Must be future date if provided."
+          example: "2099-06-30T23:59:59.000Z"
+ 
+    VoucherListResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data:
+          type: object
+          properties:
+            vouchers:
+              type: array
+              items: { $ref: "#/components/schemas/Voucher" }
+            total: { type: integer, example: 3 }
+            page:  { type: integer, example: 1 }
+            limit: { type: integer, example: 20 }

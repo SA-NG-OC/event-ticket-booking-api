@@ -1,0 +1,27 @@
+info:
+  name: Preview Voucher
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/vouchers/preview?code=SUMMER200&orderAmount=500000&concertId=e2e3f4d1-d6e3-4c78-9513-76d7afedd999"
+  params:
+    - name: code
+      value: SUMMER200
+      type: query
+    - name: orderAmount
+      value: "500000"
+      type: query
+    - name: concertId
+      value: e2e3f4d1-d6e3-4c78-9513-76d7afedd999
+      type: query
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

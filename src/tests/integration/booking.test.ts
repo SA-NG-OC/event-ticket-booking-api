@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, beforeEach } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 import request from "supertest";
 import { eq } from "drizzle-orm";
 import { app } from "@/app";
@@ -125,6 +125,14 @@ beforeAll(async () => {
             concertId: otherConcert.id, // ✅ FK hợp lệ
         },
     ]);
+});
+
+afterAll(async () => {
+    await db.delete(bookings);
+    await db.delete(ticketTiers);
+    await db.delete(voucherCampaigns);
+    await db.delete(concerts);
+    await db.delete(users);
 });
 
 // Reset bookings trước mỗi test để isolate

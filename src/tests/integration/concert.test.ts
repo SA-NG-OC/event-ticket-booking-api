@@ -5,6 +5,7 @@ import { db } from "@/infrastructure/db";
 import { concerts, ticketTiers } from "@/infrastructure/db/schema/concerts";
 import { users } from "@/infrastructure/db/schema/users";
 import { eq } from "drizzle-orm";
+import { bookings, voucherCampaigns } from "@/infrastructure/db/schema";
 
 let adminToken: string;
 let customerToken: string;
@@ -39,7 +40,9 @@ beforeEach(async () => {
 });
 
 afterAll(async () => {
+    await db.delete(bookings);
     await db.delete(ticketTiers);
+    await db.delete(voucherCampaigns);
     await db.delete(concerts);
     await db.delete(users);
 });

@@ -15,7 +15,7 @@ export function loadOpenApiDocument(): Record<string, unknown> {
         "paths/auth.yml",
         "paths/concerts.yml",
         "paths/bookings.yml",
-        // "paths/vouchers.yml",
+        "paths/vouchers.yml",
     ];
 
     const mergedPaths: Record<string, unknown> = {};

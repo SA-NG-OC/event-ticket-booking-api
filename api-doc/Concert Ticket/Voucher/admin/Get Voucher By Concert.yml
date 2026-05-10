@@ -1,17 +1,14 @@
 info:
-  name: List All Bookings
+  name: Get Voucher By Concert
   type: http
-  seq: 1
+  seq: 4
 
 http:
   method: GET
-  url: "{{baseUrl}}/bookings?status=confirmed&isFlagged=false&page=1&limit=10"
+  url: "{{baseUrl}}/vouchers?concertId={{concertId}}&page=1&limit=10"
   params:
-    - name: status
-      value: confirmed
-      type: query
-    - name: isFlagged
-      value: "false"
+    - name: concertId
+      value: "{{concertId}}"
       type: query
     - name: page
       value: "1"

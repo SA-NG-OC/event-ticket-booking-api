@@ -4,4 +4,11 @@ info:
   seq: 1
 
 request:
-  auth: inherit
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+  variables:
+    - name: bookingId
+      value: 4af5b4dd-44a0-49e7-863c-a7f6467adccc
+    - name: bookingIdCancel
+      value: 7c4b048d-b367-481b-a1f6-366c125f1548
