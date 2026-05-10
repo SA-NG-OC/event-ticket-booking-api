@@ -180,56 +180,66 @@ brew install bruno
 ## Cấu trúc project
 
 ```
-├── docs/                     # OpenAPI YAML files định nghĩa API
+├── docs/
 │   ├── paths/
 │   │   ├── auth.yml
 │   │   ├── bookings.yml
 │   │   ├── concerts.yml
 │   │   └── vouchers.yml
-│   └── swagger.yml           # File cấu hình Swagger chính ghép nối các paths
+│   └── swagger.yml
 ├── src/
-│   ├── config/               # Type-safe env config (Zod)
-│   ├── docs/                 # Swagger loader (Code để đọc/load các file YAML từ thư mục docs ở ngoài)
+│   ├── config/
+│   ├── docs/
 │   ├── infrastructure/
-│   │   ├── db/               # Drizzle client + schema + migrations + seed
-│   │   ├── queue/            # BullMQ queue + worker
-│   │   └── redis/            # Redis client
-│   ├── modules/              # Bounded contexts (DDD-lite)
+│   │   ├── db/
+│   │   ├── queue/
+│   │   └── redis/
+│   ├── modules/
 │   │   ├── auth/
+│   │   │   ├── domain/
+│   │   │   ├── application/
+│   │   │   ├── infrastructure/
+│   │   │   └── interface/
 │   │   ├── concert/
+│   │   │   ├── domain/
+│   │   │   ├── application/
+│   │   │   ├── infrastructure/
+│   │   │   │   ├── concert.repository.ts
+│   │   │   │   └── concert.mapper.ts     # toTierProps (+ toConcertProps nếu có)
+│   │   │   └── interface/
 │   │   ├── booking/
+│   │   │   ├── domain/
+│   │   │   ├── application/
+│   │   │   │   └── booking.service.ts    # import từ mapper, không còn inline helpers
+│   │   │   ├── infrastructure/
+│   │   │   │   ├── booking.repository.ts
+│   │   │   │   └── booking.mapper.ts     # toBookingProps
+│   │   │   └── interface/
 │   │   └── voucher/
-│   │       ├── domain/       # Entity + IRepository interface
-│   │       ├── application/  # Service (business logic)
-│   │       ├── infrastructure/# Repository implementation (Drizzle)
-│   │       └── interface/    # Controller + Routes + Zod schema
+│   │       ├── domain/
+│   │       ├── application/
+│   │       ├── infrastructure/
+│   │       │   ├── voucher.repository.ts
+│   │       │   └── voucher.mapper.ts     # toVoucherProps
+│   │       └── interface/
 │   ├── shared/
-│   │   ├── errors/           # AppError classes
-│   │   ├── middleware/       # auth, validate, error handler
-│   │   └── result.ts         # neverthrow Result type + DomainError
+│   │   ├── errors/
+│   │   ├── middleware/
+│   │   └── result.ts
 │   ├── tests/
-│   │   ├── integration/      # Supertest tests (real DB)
+│   │   ├── integration/
 │   │   │   ├── auth.test.ts
 │   │   │   ├── concert.test.ts
 │   │   │   ├── booking.test.ts
 │   │   │   └── voucher.test.ts
 │   │   └── setup/
-│   │       ├── global.ts     # Migrate test DB trước khi chạy suite
-│   │       └── each.ts       # Override DB env sang test DB
-│   ├── app.ts                # Express app bootstrap
-│   └── worker.ts             # Background worker bootstrap (dành cho BullMQ)
+│   │       ├── global.ts
+│   │       └── each.ts
+│   ├── app.ts
+│   └── worker.ts
 ├── .env
 ├── .env.example
-├── .gitignore
-├── docker-compose.test.yml
-├── docker-compose.yml
-├── Dockerfile
-├── drizzle.config.ts
-├── package-lock.json
-├── package.json
-├── README.md
-├── tsconfig.json
-└── vitest.config.ts
+...
 ```
 
 ---
