@@ -254,10 +254,10 @@ brew install bruno
 
 **Repository** — chỉ CRUD, trả raw DB row:
 ```typescript
-// ✅ Đúng
+// Đúng
 async findById(id: string): Promise<UserRow | undefined>
 
-// ❌ Sai — repo không throw DomainError
+// Sai — repo không throw DomainError
 async findById(id: string): Promise<Result<User, DomainError>>
 ```
 
