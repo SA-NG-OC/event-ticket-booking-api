@@ -198,29 +198,33 @@ brew install bruno
 │   │   ├── auth/
 │   │   │   ├── domain/
 │   │   │   ├── application/
+│   │   │   │   ├── auth.dto.ts       # RegisterDto, LoginDto, AuthTokens
+│   │   │   │   └── auth.service.ts
 │   │   │   ├── infrastructure/
 │   │   │   └── interface/
 │   │   ├── concert/
 │   │   │   ├── domain/
 │   │   │   ├── application/
+│   │   │   │   ├── concert.dto.ts    # CreateConcertDto, AddTicketTierDto, ConcertView, TicketTierView
+│   │   │   │   ├── concert.mapper.ts # toTierView()
+│   │   │   │   └── concert.service.ts
 │   │   │   ├── infrastructure/
-│   │   │   │   ├── concert.repository.ts
-│   │   │   │   └── concert.mapper.ts     # toTierProps (+ toConcertProps nếu có)
 │   │   │   └── interface/
 │   │   ├── booking/
 │   │   │   ├── domain/
 │   │   │   ├── application/
-│   │   │   │   └── booking.service.ts    # import từ mapper, không còn inline helpers
+│   │   │   │   ├── booking.dto.ts    # CreateBookingDto, UpdateBookingStatusDto
+│   │   │   │   ├── booking.mapper.ts # toTierProps(), toVoucherProps(), toBookingProps()
+│   │   │   │   └── booking.service.ts
 │   │   │   ├── infrastructure/
-│   │   │   │   ├── booking.repository.ts
-│   │   │   │   └── booking.mapper.ts     # toBookingProps
 │   │   │   └── interface/
 │   │   └── voucher/
 │   │       ├── domain/
 │   │       ├── application/
+│   │       │   ├── voucher.dto.ts    # CreateVoucherDto, UpdateVoucherDto, PreviewVoucherDto, VoucherView
+│   │       │   ├── voucher.mapper.ts # toView(), toNumericProps()
+│   │       │   └── voucher.service.ts
 │   │       ├── infrastructure/
-│   │       │   ├── voucher.repository.ts
-│   │       │   └── voucher.mapper.ts     # toVoucherProps
 │   │       └── interface/
 │   ├── shared/
 │   │   ├── errors/
@@ -239,7 +243,16 @@ brew install bruno
 │   └── worker.ts
 ├── .env
 ├── .env.example
-...
+├── .gitignore
+├── docker-compose.test.yml
+├── docker-compose.yml
+├── Dockerfile
+├── drizzle.config.ts
+├── package-lock.json
+├── package.json
+├── README.md
+├── tsconfig.json
+└── vitest.config.ts
 ```
 
 ---
