@@ -30,28 +30,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-  # App container — dùng khi muốn chạy full stack
-  # Để dev local thì comment phần app lại, chỉ chạy postgres + redis
-  # app:
-  #   build: .
-  #   container_name: concert_app
-  #   restart: unless-stopped
-  #   ports:
-  #     - "3000:3000"
-  #   environment:
-  #     NODE_ENV: production
-  #     DB_HOST: postgres
-  #     DB_PORT: 5432
-  #     DB_USER: concert_user
-  #     DB_PASSWORD: concert_pass
-  #     DB_NAME: concert_db
-  #     REDIS_HOST: redis
-  #     REDIS_PORT: 6379
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
 
 volumes:
   postgres_data:

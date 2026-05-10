@@ -5,27 +5,9 @@ import { ok, err, Result, DomainErrors, DomainError } from "@/shared/result";
 import { config } from "@/config";
 import { User } from "../domain/user.entity";
 import { IUserRepository } from "../domain/user.repository.interface";
+import { RegisterDto, LoginDto, AuthTokens } from "./auth.dto";
 
-export interface RegisterDto {
-  email: string;
-  password: string;
-  name: string;
-}
-
-export interface LoginDto {
-  email: string;
-  password: string;
-}
-
-export interface AuthTokens {
-  accessToken: string;
-  user: {
-    id: string;
-    email: string;
-    name: string;
-    role: string;
-  };
-}
+export type { RegisterDto, LoginDto, AuthTokens };
 
 export class AuthService {
   constructor(private readonly userRepo: IUserRepository) { }
@@ -36,7 +18,6 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
 
-    // Service gọi Entity.create() — domain validation xảy ra ở đây
     const userResult = User.create({
       id: uuidv4(),
       email: dto.email,
@@ -47,10 +28,8 @@ export class AuthService {
 
     const user = userResult.value;
 
-    // Repo chỉ nhận plain data để persist
     try {
       const row = await this.userRepo.save(user.toPersistence());
-      // Service reconstruct Entity từ row trả về
       const savedUser = User.fromRow(row);
       return ok(this._generateTokens(savedUser));
     } catch (e: any) {
@@ -64,12 +43,10 @@ export class AuthService {
   async login(dto: LoginDto): Promise<Result<AuthTokens, DomainError>> {
     const row = await this.userRepo.findByEmail(dto.email);
 
-    // Repo trả undefined → Service quyết định đây là domain error gì
     if (!row) {
       return err(DomainErrors.unauthorized("Invalid email or password"));
     }
 
-    // Service reconstruct Entity để dùng domain methods
     const user = User.fromRow(row);
 
     const isMatch = await bcrypt.compare(dto.password, user.passwordHash);

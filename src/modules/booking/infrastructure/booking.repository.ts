@@ -68,7 +68,6 @@ export class BookingRepository implements IBookingRepository {
 }
 
 // ── Transaction-aware repository ─────────────────────────────────────────────
-// Dùng raw SQL cho SELECT FOR UPDATE vì Drizzle ORM chưa có built-in support
 export class BookingTxRepository implements IBookingTxRepository {
     async lockTicketTier(tierId: string, tx: any): Promise<TicketTierRow | undefined> {
         const rows = await tx.execute(

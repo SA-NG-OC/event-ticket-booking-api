@@ -12,7 +12,7 @@ http:
       {
         "ticketTierId": "1d60baa1-99fa-4f39-849d-b5cf37e870c0",
         "quantity": 2,
-        "idempotencyKey": "cf52e84c-b978-4702-bfc8-2fcdd4be5faa"
+        "idempotencyKey": "cf52e84c-b978-4702-bfc8-2fcdd4be5fcc"
       }
   auth: inherit
 

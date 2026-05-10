@@ -1,32 +1,12 @@
 import { v4 as uuidv4 } from "uuid";
 import { ok, err, Result, DomainErrors, DomainError } from "@/shared/result";
-import { Concert, TicketTier, ConcertProps, TicketTierProps } from "../domain/concert.entity";
+import { Concert, TicketTier } from "../domain/concert.entity";
 import { IConcertRepository, ITicketTierRepository, ListConcertsFilter } from "../domain/concert.repository.interface";
+import { CreateConcertDto, AddTicketTierDto, ConcertView, TicketTierView } from "./concert.dto";
+import { toTierView } from "./concert.mapper";
 
-// ── DTOs ─────────────────────────────────────────────────────────────────────
-export interface CreateConcertDto {
-    name: string;
-    description?: string;
-    venue: string;
-    artistName: string;
-    eventDate: Date;
-}
+export type { CreateConcertDto, AddTicketTierDto, ConcertView, TicketTierView };
 
-export interface AddTicketTierDto {
-    name: string;
-    price: number;
-    totalQty: number;
-}
-
-// ── Response shapes (plain objects — không expose Entity ra ngoài service) ──
-export type ConcertView = ConcertProps;
-export type TicketTierView = TicketTierProps & { availableQty: number };
-
-function toTierView(tier: TicketTier): TicketTierView {
-    return { ...tier.toPersistence(), availableQty: tier.availableQty };
-}
-
-// ── Service ───────────────────────────────────────────────────────────────────
 export class ConcertService {
     constructor(
         private readonly concertRepo: IConcertRepository,
@@ -53,7 +33,7 @@ export class ConcertService {
         const tierRows = await this.ticketTierRepo.findByConcertId(id);
         const tiers = tierRows.map(r => toTierView(TicketTier.fromRow({
             ...r,
-            price: Number(r.price),   // numeric string → number
+            price: Number(r.price),
         })));
 
         return ok({ concert: concert.toPersistence(), tiers });
@@ -76,7 +56,6 @@ export class ConcertService {
         const concertRow = await this.concertRepo.findById(concertId);
         if (!concertRow) return err(DomainErrors.notFound("Concert"));
 
-        // Validate tất cả tiers trước khi persist bất kỳ cái nào
         const tierEntities: TicketTier[] = [];
         for (const dto of tiers) {
             const result = TicketTier.create({ id: uuidv4(), concertId, ...dto });
@@ -87,7 +66,7 @@ export class ConcertService {
         const rows = await this.ticketTierRepo.saveBatch(
             tierEntities.map(t => ({
                 ...t.toPersistence(),
-                price: String(t.price), // number → string cho numeric column
+                price: String(t.price),
             })),
         );
 
@@ -98,7 +77,6 @@ export class ConcertService {
         const row = await this.concertRepo.findById(id);
         if (!row) return err(DomainErrors.notFound("Concert"));
 
-        // Check phải có ít nhất 1 tier trước khi publish
         const tiers = await this.ticketTierRepo.findByConcertId(id);
         if (tiers.length === 0) {
             return err(DomainErrors.businessRule("Concert must have at least one ticket tier before publishing"));

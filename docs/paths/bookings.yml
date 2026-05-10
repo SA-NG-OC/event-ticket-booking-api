@@ -47,7 +47,7 @@
                     totalAmount: 7000000
                     discountAmount: 0
                     finalAmount: 7000000
-                    voucherCode: null
+                    voucherCode: SUMMER10
                     status: confirmed
                     idempotencyKey: "cf52e84c-b978-4702-bfc8-2fcdd4be5faa"
                     isFlagged: false
@@ -63,7 +63,7 @@
                     totalAmount: 7000000
                     discountAmount: 0
                     finalAmount: 7000000
-                    voucherCode: null
+                    voucherCode: SUMMER10
                     status: confirmed
                     idempotencyKey: "cf52e84c-b978-4702-bfc8-2fcdd4be5fad"
                     isFlagged: false
@@ -100,7 +100,7 @@
           example:
             ticketTierId: "bce7708f-8eb9-4562-96de-70175956c0b0"
             quantity: 2
-            voucherCode: null
+            voucherCode: SUMMER10
             idempotencyKey: "cf52e84c-b978-4702-bfc8-2fcdd4be5faa"
     responses:
       "201":
@@ -124,7 +124,7 @@
                 totalAmount: 7000000
                 discountAmount: 0
                 finalAmount: 7000000
-                voucherCode: null
+                voucherCode: SUMMER10
                 status: pending
                 idempotencyKey: "cf52e84c-b978-4702-bfc8-2fcdd4be5faa"
                 isFlagged: false
@@ -208,7 +208,7 @@
                     totalAmount: 7000000
                     discountAmount: 0
                     finalAmount: 7000000
-                    voucherCode: null
+                    voucherCode: SUMMER10
                     status: confirmed
                     idempotencyKey: "cf52e84c-b978-4702-bfc8-2fcdd4be5faa"
                     isFlagged: false
@@ -224,7 +224,7 @@
                     totalAmount: 7000000
                     discountAmount: 0
                     finalAmount: 7000000
-                    voucherCode: null
+                    voucherCode: SUMMER10
                     status: confirmed
                     idempotencyKey: "cf52e84c-b978-4702-bfc8-2fcdd4be5fad"
                     isFlagged: false
@@ -275,7 +275,7 @@
                 totalAmount: 7000000
                 discountAmount: 0
                 finalAmount: 7000000
-                voucherCode: null
+                voucherCode: SUMMER10
                 status: confirmed
                 idempotencyKey: "cf52e84c-b978-4702-bfc8-2fcdd4be5faa"
                 isFlagged: false
@@ -331,7 +331,7 @@
                 totalAmount: 7000000
                 discountAmount: 0
                 finalAmount: 7000000
-                voucherCode: null
+                voucherCode: SUMMER10
                 status: cancelled
                 idempotencyKey: "cf52e84c-b978-4702-bfc8-2fcdd4be5fad"
                 isFlagged: false
@@ -396,7 +396,7 @@
                 totalAmount: 7000000
                 discountAmount: 0
                 finalAmount: 7000000
-                voucherCode: null
+                voucherCode: SUMMER10
                 status: confirmed
                 idempotencyKey: "cf52e84c-b978-4702-bfc8-2fcdd4be5faa"
                 isFlagged: false
@@ -461,7 +461,7 @@
                 totalAmount: 7000000
                 discountAmount: 0
                 finalAmount: 7000000
-                voucherCode: null
+                voucherCode: SUMMER10
                 status: confirmed
                 idempotencyKey: "cf52e84c-b978-4702-bfc8-2fcdd4be5faa"
                 isFlagged: true
@@ -508,7 +508,7 @@
                 totalAmount: 7000000
                 discountAmount: 0
                 finalAmount: 7000000
-                voucherCode: null
+                voucherCode: SUMMER10
                 status: confirmed
                 idempotencyKey: "cf52e84c-b978-4702-bfc8-2fcdd4be5faa"
                 isFlagged: false

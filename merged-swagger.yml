@@ -1,0 +1,2603 @@
+openapi: 3.0.3
+info:
+  title: Concert Booking API
+  version: 1.0.0
+  description: |
+    Backend API for Concert Ticket Booking Platform.
+
+    **Auth:** Include `Authorization: Bearer <token>` on protected endpoints  
+    **Roles:** `customer` booking flows | `admin` operations dashboard
+servers:
+  - url: http://localhost:3000
+    description: Local development
+tags:
+  - name: Auth
+    description: Authentication endpoints
+  - name: Concerts (Customer)
+    description: Public concert browsing
+  - name: Concerts (Admin)
+    description: Concert management
+  - name: Bookings (Customer)
+    description: Ticket booking flows
+  - name: Bookings (Admin)
+    description: Booking management
+  - name: Vouchers (Customer)
+    description: Voucher preview
+  - name: Vouchers (Admin)
+    description: Voucher management
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        type:
+          type: string
+          example: CONFLICT
+        message:
+          type: string
+          example: Email already exists
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 100
+        totalPages:
+          type: integer
+          example: 5
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - name
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          minLength: 8
+          example: secret123
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: Nguyen Van A
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: admin@gmail.com
+        password:
+          type: string
+          minLength: 1
+          example: secret123
+    AuthUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: a10fc229-6cdc-4232-b538-a2b53be912e4
+        email:
+          type: string
+          format: email
+          example: admin@gmail.com
+        name:
+          type: string
+          example: Sang
+        role:
+          type: string
+          enum:
+            - customer
+            - admin
+          example: admin
+    AuthTokens:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        user:
+          $ref: '#/components/schemas/AuthUser'
+    MeResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 4c9570aa-eb54-4df4-9607-a7e57940b1d0
+        role:
+          type: string
+          enum:
+            - customer
+            - admin
+          example: customer
+    Concert:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 8f205135-f395-421a-9b45-9815a2246e9e
+        name:
+          type: string
+          example: Son Tung Sky Tour 2026
+        description:
+          type: string
+          nullable: true
+          example: >-
+            Live concert with special guest performances and visual stage
+            effects.
+        venue:
+          type: string
+          example: San van dong My Dinh
+        artistName:
+          type: string
+          example: Son Tung M-TP
+        eventDate:
+          type: string
+          format: date-time
+          example: '2026-12-20T19:00:00.000Z'
+        status:
+          type: string
+          enum:
+            - draft
+            - on_sale
+            - sold_out
+            - cancelled
+            - completed
+          example: draft
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-05-09T09:42:12.886Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2026-05-09T09:42:12.886Z'
+    TicketTier:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: cf52e84c-b978-4702-bfc8-2fcdd4be5fad
+        concertId:
+          type: string
+          format: uuid
+          example: 8f205135-f395-421a-9b45-9815a2246e9e
+        name:
+          type: string
+          example: VIP
+        price:
+          type: number
+          example: 3500000
+        totalQty:
+          type: integer
+          example: 100
+        reservedQty:
+          type: integer
+          example: 0
+        soldQty:
+          type: integer
+          example: 40
+        availableQty:
+          type: integer
+          example: 50
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-05-09T09:42:18.458Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2026-05-09T09:42:18.458Z'
+    CreateConcertRequest:
+      type: object
+      required:
+        - name
+        - venue
+        - artistName
+        - eventDate
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 255
+          example: Son Tung Sky Tour 2026
+        description:
+          type: string
+          maxLength: 2000
+          example: >-
+            Live concert with special guest performances and visual stage
+            effects.
+        venue:
+          type: string
+          minLength: 2
+          maxLength: 255
+          example: San van dong My Dinh
+        artistName:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: Son Tung M-TP
+        eventDate:
+          type: string
+          format: date-time
+          example: '2026-12-20T19:00:00.000Z'
+    AddTicketTiersRequest:
+      type: object
+      required:
+        - tiers
+      properties:
+        tiers:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required:
+              - name
+              - price
+              - totalQty
+            properties:
+              name:
+                type: string
+                minLength: 1
+                maxLength: 100
+                example: VIP
+              price:
+                type: number
+                example: 3500000
+              totalQty:
+                type: integer
+                example: 100
+          example:
+            - name: VIP
+              price: 3500000
+              totalQty: 100
+            - name: STANDARD
+              price: 1200000
+              totalQty: 500
+            - name: EARLY_BIRD
+              price: 800000
+              totalQty: 200
+    Booking:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: a1b2c3d4-0000-0000-0000-000000000001
+        userId:
+          type: string
+          format: uuid
+          example: u1b2c3d4-0000-0000-0000-000000000001
+        ticketTierId:
+          type: string
+          format: uuid
+          example: t1b2c3d4-0000-0000-0000-000000000001
+        concertId:
+          type: string
+          format: uuid
+          example: c1b2c3d4-0000-0000-0000-000000000001
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 10
+          example: 2
+        unitPrice:
+          type: number
+          example: 1500000
+        totalAmount:
+          type: number
+          example: 3000000
+        discountAmount:
+          type: number
+          example: 300000
+        finalAmount:
+          type: number
+          example: 2700000
+        voucherCode:
+          type: string
+          nullable: true
+          maxLength: 50
+          example: FLASHSALE10
+        status:
+          type: string
+          enum:
+            - pending
+            - confirmed
+            - cancelled
+            - failed
+          example: pending
+        idempotencyKey:
+          type: string
+          format: uuid
+          example: e7f8a9b0-1111-2222-3333-444455556666
+        isFlagged:
+          type: boolean
+          example: false
+        flagReason:
+          type: string
+          nullable: true
+          example: null
+        createdAt:
+          type: string
+          format: date-time
+          example: '2025-06-01T10:00:00.000Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2025-06-01T10:00:05.000Z'
+    BookingListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            bookings:
+              type: array
+              items:
+                $ref: '#/components/schemas/Booking'
+            total:
+              type: integer
+              example: 42
+            page:
+              type: integer
+              example: 1
+            limit:
+              type: integer
+              example: 20
+    CreateBookingRequest:
+      type: object
+      required:
+        - ticketTierId
+        - quantity
+        - idempotencyKey
+      properties:
+        ticketTierId:
+          type: string
+          format: uuid
+          example: t1b2c3d4-0000-0000-0000-000000000001
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 10
+          example: 2
+        voucherCode:
+          type: string
+          minLength: 1
+          maxLength: 50
+          nullable: true
+          example: FLASHSALE10
+        idempotencyKey:
+          type: string
+          format: uuid
+          description: Client-generated UUID. Same key returns same booking (no duplicate).
+          example: e7f8a9b0-1111-2222-3333-444455556666
+    UpdateStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - confirmed
+            - cancelled
+            - failed
+          example: confirmed
+    FlagBookingRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+          example: User made 5 bookings within 1 minute — suspected bot
+    Voucher:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: v1b2c3d4-0000-0000-0000-000000000001
+        name:
+          type: string
+          example: Flash Sale 10%
+        code:
+          type: string
+          example: FLASHSALE10
+        discountType:
+          type: string
+          enum:
+            - percentage
+            - fixed
+          example: percentage
+        discountValue:
+          type: number
+          example: 10
+        maxUses:
+          type: integer
+          minimum: 1
+          example: 500
+        usedCount:
+          type: integer
+          example: 42
+        remainingUses:
+          type: integer
+          example: 458
+          description: 'Computed: maxUses - usedCount'
+        minOrderValue:
+          type: number
+          minimum: 0
+          example: 500000
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2099-12-31T23:59:59.000Z'
+        concertId:
+          type: string
+          format: uuid
+          nullable: true
+          example: null
+          description: null = applies to all concerts
+        isExpired:
+          type: boolean
+          example: false
+          description: 'Computed: expiresAt < now'
+        isExhausted:
+          type: boolean
+          example: false
+          description: 'Computed: usedCount >= maxUses'
+        createdAt:
+          type: string
+          format: date-time
+          example: '2025-06-01T08:00:00.000Z'
+    VoucherPreview:
+      type: object
+      properties:
+        code:
+          type: string
+          example: FLASHSALE10
+        discountType:
+          type: string
+          enum:
+            - percentage
+            - fixed
+          example: percentage
+        discountAmount:
+          type: number
+          example: 200000
+          description: Amount to be deducted
+        finalAmount:
+          type: number
+          example: 1800000
+          description: orderAmount - discountAmount
+        description:
+          type: string
+          example: 10% off
+    CreateVoucherRequest:
+      type: object
+      required:
+        - name
+        - code
+        - discountType
+        - discountValue
+        - maxUses
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 255
+          example: Flash Sale 10%
+        code:
+          type: string
+          minLength: 3
+          maxLength: 50
+          pattern: ^[A-Z0-9_-]{3,50}$
+          description: Uppercase alphanumeric only (A-Z, 0-9, _, -)
+          example: FLASHSALE10
+        discountType:
+          type: string
+          enum:
+            - percentage
+            - fixed
+          example: percentage
+        discountValue:
+          type: number
+          exclusiveMinimum: 0
+          description: 'For percentage: 1–100. For fixed: any positive number (VND).'
+          example: 10
+        maxUses:
+          type: integer
+          minimum: 1
+          example: 500
+        minOrderValue:
+          type: number
+          minimum: 0
+          default: 0
+          example: 0
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2099-12-31T23:59:59.000Z'
+        concertId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Scope voucher to one concert. Omit (or null) for all concerts.
+          example: null
+    UpdateVoucherRequest:
+      type: object
+      description: >-
+        At least one field required. Only name, maxUses, expiresAt can be
+        changed.
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 255
+          example: Flash Sale 10% — Extended
+        maxUses:
+          type: integer
+          minimum: 1
+          description: Cannot be set below current usedCount
+          example: 1000
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: null = remove expiry. Must be future date if provided.
+          example: '2099-06-30T23:59:59.000Z'
+    VoucherListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            vouchers:
+              type: array
+              items:
+                $ref: '#/components/schemas/Voucher'
+            total:
+              type: integer
+              example: 3
+            page:
+              type: integer
+              example: 1
+            limit:
+              type: integer
+              example: 20
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Register customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            example:
+              email: user@example.com
+              password: secret123
+              name: Nguyen Van A
+      responses:
+        '201':
+          description: Registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/AuthTokens'
+              example:
+                success: true
+                data:
+                  accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  user:
+                    id: a10fc229-6cdc-4232-b538-a2b53be912e4
+                    email: user@example.com
+                    name: Nguyen Van A
+                    role: customer
+        '409':
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: CONFLICT
+                message: Email already exists
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: admin@gmail.com
+              password: secret123
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/AuthTokens'
+              example:
+                success: true
+                data:
+                  accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  user:
+                    id: a10fc229-6cdc-4232-b538-a2b53be912e4
+                    email: admin@gmail.com
+                    name: Sang
+                    role: admin
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: UNAUTHORIZED
+                message: Invalid email or password
+  /auth/me:
+    get:
+      tags:
+        - Auth
+      summary: Current user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/MeResponse'
+              example:
+                success: true
+                data:
+                  id: 4c9570aa-eb54-4df4-9607-a7e57940b1d0
+                  role: customer
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: UNAUTHORIZED
+                message: Missing or invalid token
+  /concerts:
+    get:
+      tags:
+        - Concerts (Customer)
+      summary: List concerts
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - draft
+              - on_sale
+              - sold_out
+              - cancelled
+              - completed
+          example: on_sale
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          example: 20
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      concerts:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Concert'
+                      total:
+                        type: integer
+                      page:
+                        type: integer
+                        nullable: true
+                      limit:
+                        type: integer
+                        nullable: true
+              example:
+                success: true
+                data:
+                  concerts:
+                    - id: 8f205135-f395-421a-9b45-9815a2246e9e
+                      name: Sơn Tùng Sky Tour 2026
+                      description: Live concert with special guest performances.
+                      venue: Sân vận động Mỹ Đình
+                      artistName: Sơn Tùng M-TP
+                      eventDate: '2026-12-20T19:00:00.000Z'
+                      status: on_sale
+                      createdAt: '2026-05-09T09:42:12.886Z'
+                      updatedAt: '2026-05-09T09:42:12.886Z'
+                  total: 1
+                  page: null
+                  limit: null
+    post:
+      tags:
+        - Concerts (Admin)
+      summary: Create concert
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateConcertRequest'
+            example:
+              name: Sơn Tùng Sky Tour 2026
+              description: >-
+                Live concert with special guest performances and visual stage
+                effects.
+              venue: Sân vận động Mỹ Đình
+              artistName: Sơn Tùng M-TP
+              eventDate: '2026-12-20T19:00:00.000Z'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Concert'
+              example:
+                success: true
+                data:
+                  id: 8f205135-f395-421a-9b45-9815a2246e9e
+                  name: Sơn Tùng Sky Tour 2026
+                  description: >-
+                    Live concert with special guest performances and visual
+                    stage effects.
+                  venue: Sân vận động Mỹ Đình
+                  artistName: Sơn Tùng M-TP
+                  eventDate: '2026-12-20T19:00:00.000Z'
+                  status: draft
+                  createdAt: '2026-05-09T09:42:12.886Z'
+                  updatedAt: '2026-05-09T09:42:12.886Z'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: UNAUTHORIZED
+                message: Missing or invalid token
+  /concerts/{id}:
+    get:
+      tags:
+        - Concerts (Customer)
+      summary: Concert detail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 8f205135-f395-421a-9b45-9815a2246e9e
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      concert:
+                        $ref: '#/components/schemas/Concert'
+                      tiers:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TicketTier'
+              example:
+                success: true
+                data:
+                  concert:
+                    id: 8f205135-f395-421a-9b45-9815a2246e9e
+                    name: Sơn Tùng Sky Tour 2026
+                    venue: Sân vận động Mỹ Đình
+                    artistName: Sơn Tùng M-TP
+                    eventDate: '2026-12-20T19:00:00.000Z'
+                    status: on_sale
+                    createdAt: '2026-05-09T09:42:12.886Z'
+                    updatedAt: '2026-05-09T09:42:12.886Z'
+                  tiers:
+                    - id: cf52e84c-b978-4702-bfc8-2fcdd4be5fad
+                      concertId: 8f205135-f395-421a-9b45-9815a2246e9e
+                      name: VIP
+                      price: 3500000
+                      totalQty: 100
+                      reservedQty: 0
+                      soldQty: 0
+                      availableQty: 100
+                      createdAt: '2026-05-09T09:42:18.458Z'
+                      updatedAt: '2026-05-09T09:42:18.458Z'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: NOT_FOUND
+                message: Concert not found
+  /concerts/{id}/availability:
+    get:
+      tags:
+        - Concerts (Customer)
+      summary: Ticket availability
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 8f205135-f395-421a-9b45-9815a2246e9e
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TicketTier'
+              example:
+                success: true
+                data:
+                  - id: 60eb8f9e-ac82-49e7-8cb2-607a23e5a6c1
+                    concertId: 8f205135-f395-421a-9b45-9815a2246e9e
+                    name: EARLY_BIRD
+                    price: 800000
+                    totalQty: 200
+                    reservedQty: 0
+                    soldQty: 0
+                    availableQty: 200
+                    createdAt: '2026-05-09T09:42:18.458Z'
+                    updatedAt: '2026-05-09T09:42:18.458Z'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: NOT_FOUND
+                message: Concert not found
+  /concerts/{id}/tiers:
+    post:
+      tags:
+        - Concerts (Admin)
+      summary: Add ticket tiers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 8f205135-f395-421a-9b45-9815a2246e9e
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddTicketTiersRequest'
+            example:
+              tiers:
+                - name: VIP
+                  price: 3500000
+                  totalQty: 100
+                - name: STANDARD
+                  price: 1200000
+                  totalQty: 500
+                - name: EARLY_BIRD
+                  price: 800000
+                  totalQty: 200
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TicketTier'
+              example:
+                success: true
+                data:
+                  - id: cf52e84c-b978-4702-bfc8-2fcdd4be5fad
+                    concertId: 8f205135-f395-421a-9b45-9815a2246e9e
+                    name: VIP
+                    price: 3500000
+                    totalQty: 100
+                    reservedQty: 0
+                    soldQty: 0
+                    availableQty: 100
+                    createdAt: '2026-05-09T09:42:18.458Z'
+                    updatedAt: '2026-05-09T09:42:18.458Z'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: UNAUTHORIZED
+                message: Missing or invalid token
+        '404':
+          description: Concert not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: NOT_FOUND
+                message: Concert not found
+  /concerts/{id}/publish:
+    patch:
+      tags:
+        - Concerts (Admin)
+      summary: Publish concert
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 8f205135-f395-421a-9b45-9815a2246e9e
+      responses:
+        '200':
+          description: Published
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Concert'
+              example:
+                success: true
+                data:
+                  id: 8f205135-f395-421a-9b45-9815a2246e9e
+                  name: Sơn Tùng Sky Tour 2026
+                  venue: Sân vận động Mỹ Đình
+                  artistName: Sơn Tùng M-TP
+                  eventDate: '2026-12-20T19:00:00.000Z'
+                  status: on_sale
+                  createdAt: '2026-05-09T09:42:12.886Z'
+                  updatedAt: '2026-05-09T09:42:21.905Z'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: UNAUTHORIZED
+                message: Missing or invalid token
+        '404':
+          description: Concert not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: NOT_FOUND
+                message: Concert not found
+  /concerts/{id}/cancel:
+    patch:
+      tags:
+        - Concerts (Admin)
+      summary: Cancel concert
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 8f205135-f395-421a-9b45-9815a2246e9e
+      responses:
+        '200':
+          description: Cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Concert'
+              example:
+                success: true
+                data:
+                  id: 8f205135-f395-421a-9b45-9815a2246e9e
+                  name: Sơn Tùng Sky Tour 2026
+                  venue: Sân vận động Mỹ Đình
+                  artistName: Sơn Tùng M-TP
+                  eventDate: '2026-12-20T19:00:00.000Z'
+                  status: cancelled
+                  createdAt: '2026-05-09T09:42:12.886Z'
+                  updatedAt: '2026-05-09T09:42:24.426Z'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: UNAUTHORIZED
+                message: Missing or invalid token
+        '404':
+          description: Concert not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: NOT_FOUND
+                message: Concert not found
+  /bookings:
+    get:
+      tags:
+        - Bookings (Admin)
+      summary: List all bookings with filters (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: userId
+          schema:
+            type: string
+            format: uuid
+          example: 54c9aa07-ee4b-45e2-beb1-4944dfa72b9d
+        - in: query
+          name: concertId
+          schema:
+            type: string
+            format: uuid
+          example: fb353d72-13c5-42c2-b35e-62607018d5f0
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum:
+              - pending
+              - confirmed
+              - cancelled
+              - failed
+          example: cancelled
+        - in: query
+          name: isFlagged
+          schema:
+            type: string
+            enum:
+              - 'true'
+              - 'false'
+          example: 'true'
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          example: 10
+      responses:
+        '200':
+          description: Paginated list of all bookings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingListResponse'
+              example:
+                success: true
+                data:
+                  bookings:
+                    - id: 0129350f-a477-48f2-84e9-bd815d04feae
+                      userId: 54c9aa07-ee4b-45e2-beb1-4944dfa72b9d
+                      ticketTierId: bce7708f-8eb9-4562-96de-70175956c0b0
+                      concertId: fb353d72-13c5-42c2-b35e-62607018d5f0
+                      quantity: 2
+                      unitPrice: 3500000
+                      totalAmount: 7000000
+                      discountAmount: 0
+                      finalAmount: 7000000
+                      voucherCode: SUMMER10
+                      status: confirmed
+                      idempotencyKey: cf52e84c-b978-4702-bfc8-2fcdd4be5faa
+                      isFlagged: false
+                      flagReason: null
+                      createdAt: '2026-05-09T15:04:12.208Z'
+                      updatedAt: '2026-05-09T15:04:14.380Z'
+                    - id: 29033b34-ea66-48b7-bc14-8b748e593d06
+                      userId: 54c9aa07-ee4b-45e2-beb1-4944dfa72b9d
+                      ticketTierId: bce7708f-8eb9-4562-96de-70175956c0b0
+                      concertId: fb353d72-13c5-42c2-b35e-62607018d5f0
+                      quantity: 2
+                      unitPrice: 3500000
+                      totalAmount: 7000000
+                      discountAmount: 0
+                      finalAmount: 7000000
+                      voucherCode: SUMMER10
+                      status: confirmed
+                      idempotencyKey: cf52e84c-b978-4702-bfc8-2fcdd4be5fad
+                      isFlagged: false
+                      flagReason: null
+                      createdAt: '2026-05-09T14:46:18.221Z'
+                      updatedAt: '2026-05-09T14:46:20.327Z'
+                  total: 2
+                  page: 1
+                  limit: 20
+        '403':
+          description: Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: FORBIDDEN
+                message: Admin access required
+    post:
+      tags:
+        - Bookings (Customer)
+      summary: Create a new booking
+      description: >
+        Creates a booking with oversell protection (SELECT FOR UPDATE on ticket
+        tier).
+
+
+        **Idempotency:** Send the same `idempotencyKey` UUID on retry — the
+        original booking
+
+        is returned without creating a duplicate.
+
+
+        **Async payment:** After creation, a background job simulates payment
+        (2s delay).
+
+        Poll `GET /bookings/{id}` to check if status changed to `confirmed` or
+        `failed`.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookingRequest'
+            example:
+              ticketTierId: bce7708f-8eb9-4562-96de-70175956c0b0
+              quantity: 2
+              voucherCode: SUMMER10
+              idempotencyKey: cf52e84c-b978-4702-bfc8-2fcdd4be5faa
+      responses:
+        '201':
+          description: Booking created (status = pending, payment processing async)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Booking'
+              example:
+                success: true
+                data:
+                  id: 0129350f-a477-48f2-84e9-bd815d04feae
+                  userId: 54c9aa07-ee4b-45e2-beb1-4944dfa72b9d
+                  ticketTierId: bce7708f-8eb9-4562-96de-70175956c0b0
+                  concertId: fb353d72-13c5-42c2-b35e-62607018d5f0
+                  quantity: 2
+                  unitPrice: 3500000
+                  totalAmount: 7000000
+                  discountAmount: 0
+                  finalAmount: 7000000
+                  voucherCode: SUMMER10
+                  status: pending
+                  idempotencyKey: cf52e84c-b978-4702-bfc8-2fcdd4be5faa
+                  isFlagged: false
+                  flagReason: null
+                  createdAt: '2026-05-09T15:04:12.208Z'
+                  updatedAt: '2026-05-09T15:04:12.208Z'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: VALIDATION
+                message: Quantity must be between 1 and 10
+        '401':
+          description: Missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: UNAUTHORIZED
+                message: Missing or invalid Authorization header
+        '404':
+          description: Ticket tier or concert not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: NOT_FOUND
+                message: Ticket tier not found
+        '409':
+          description: Not enough tickets available, or voucher already used
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                oversell:
+                  summary: Not enough tickets
+                  value:
+                    success: false
+                    type: CONFLICT
+                    message: 'Not enough tickets. Available: 3, Requested: 5'
+                voucher_used:
+                  summary: Voucher already used by this user
+                  value:
+                    success: false
+                    type: CONFLICT
+                    message: You have already used this voucher
+        '422':
+          description: Business rule violation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                not_on_sale:
+                  summary: Concert not accepting bookings
+                  value:
+                    success: false
+                    type: BUSINESS_RULE
+                    message: Concert is not accepting bookings
+                voucher_expired:
+                  summary: Voucher expired
+                  value:
+                    success: false
+                    type: BUSINESS_RULE
+                    message: Voucher has expired
+                min_order:
+                  summary: Order below minimum value
+                  value:
+                    success: false
+                    type: BUSINESS_RULE
+                    message: Minimum order value for this voucher is 500000
+  /bookings/my:
+    get:
+      tags:
+        - Bookings (Customer)
+      summary: Get my bookings (paginated)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+            example: 20
+      responses:
+        '200':
+          description: List of caller's bookings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingListResponse'
+              example:
+                success: true
+                data:
+                  bookings:
+                    - id: 0129350f-a477-48f2-84e9-bd815d04feae
+                      userId: 54c9aa07-ee4b-45e2-beb1-4944dfa72b9d
+                      ticketTierId: bce7708f-8eb9-4562-96de-70175956c0b0
+                      concertId: fb353d72-13c5-42c2-b35e-62607018d5f0
+                      quantity: 2
+                      unitPrice: 3500000
+                      totalAmount: 7000000
+                      discountAmount: 0
+                      finalAmount: 7000000
+                      voucherCode: SUMMER10
+                      status: confirmed
+                      idempotencyKey: cf52e84c-b978-4702-bfc8-2fcdd4be5faa
+                      isFlagged: false
+                      flagReason: null
+                      createdAt: '2026-05-09T15:04:12.208Z'
+                      updatedAt: '2026-05-09T15:04:14.380Z'
+                    - id: 29033b34-ea66-48b7-bc14-8b748e593d06
+                      userId: 54c9aa07-ee4b-45e2-beb1-4944dfa72b9d
+                      ticketTierId: bce7708f-8eb9-4562-96de-70175956c0b0
+                      concertId: fb353d72-13c5-42c2-b35e-62607018d5f0
+                      quantity: 2
+                      unitPrice: 3500000
+                      totalAmount: 7000000
+                      discountAmount: 0
+                      finalAmount: 7000000
+                      voucherCode: SUMMER10
+                      status: confirmed
+                      idempotencyKey: cf52e84c-b978-4702-bfc8-2fcdd4be5fad
+                      isFlagged: false
+                      flagReason: null
+                      createdAt: '2026-05-09T14:46:18.221Z'
+                      updatedAt: '2026-05-09T14:46:20.327Z'
+                  total: 2
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: UNAUTHORIZED
+                message: Missing or invalid Authorization header
+  /bookings/{id}:
+    get:
+      tags:
+        - Bookings (Customer)
+      summary: Get booking detail by ID
+      description: Customer can only view their own bookings. Admin can view any.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 0129350f-a477-48f2-84e9-bd815d04feae
+      responses:
+        '200':
+          description: Booking detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Booking'
+              example:
+                success: true
+                data:
+                  id: 0129350f-a477-48f2-84e9-bd815d04feae
+                  userId: 54c9aa07-ee4b-45e2-beb1-4944dfa72b9d
+                  ticketTierId: bce7708f-8eb9-4562-96de-70175956c0b0
+                  concertId: fb353d72-13c5-42c2-b35e-62607018d5f0
+                  quantity: 2
+                  unitPrice: 3500000
+                  totalAmount: 7000000
+                  discountAmount: 0
+                  finalAmount: 7000000
+                  voucherCode: SUMMER10
+                  status: confirmed
+                  idempotencyKey: cf52e84c-b978-4702-bfc8-2fcdd4be5faa
+                  isFlagged: false
+                  flagReason: null
+                  createdAt: '2026-05-09T15:04:12.208Z'
+                  updatedAt: '2026-05-09T15:04:14.380Z'
+        '403':
+          description: Forbidden — viewing another user's booking
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: FORBIDDEN
+                message: You can only view your own bookings
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: NOT_FOUND
+                message: Booking not found
+  /bookings/{id}/cancel:
+    patch:
+      tags:
+        - Bookings (Customer)
+      summary: Cancel my booking
+      description: >
+        Customer can cancel their own `pending` or `confirmed` booking.
+
+        If booking was `confirmed`, reserved inventory is released
+        automatically.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 2e55099b-60c3-4f6e-a8a4-927893e06b60
+      responses:
+        '200':
+          description: Booking cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Booking'
+              example:
+                success: true
+                data:
+                  id: 2e55099b-60c3-4f6e-a8a4-927893e06b60
+                  userId: c83ee176-4733-4a8a-905a-e2b0ebeb20df
+                  ticketTierId: bce7708f-8eb9-4562-96de-70175956c0b0
+                  concertId: fb353d72-13c5-42c2-b35e-62607018d5f0
+                  quantity: 2
+                  unitPrice: 3500000
+                  totalAmount: 7000000
+                  discountAmount: 0
+                  finalAmount: 7000000
+                  voucherCode: SUMMER10
+                  status: cancelled
+                  idempotencyKey: cf52e84c-b978-4702-bfc8-2fcdd4be5fad
+                  isFlagged: false
+                  flagReason: null
+                  createdAt: '2026-05-09T14:04:39.923Z'
+                  updatedAt: '2026-05-09T14:06:24.945Z'
+        '403':
+          description: Forbidden — cancelling another user's booking
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: FORBIDDEN
+                message: You can only cancel your own bookings
+        '422':
+          description: Cannot cancel — already cancelled or failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: BUSINESS_RULE
+                message: Cannot cancel booking with status 'failed'
+  /bookings/{id}/status:
+    patch:
+      tags:
+        - Bookings (Admin)
+      summary: Manually update booking status (admin)
+      description: |
+        **Allowed transitions:**
+        - `pending` → `confirmed`
+        - `pending` → `cancelled`
+        - `pending` → `failed`
+        - `confirmed` → `cancelled` (also releases reserved inventory)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 0129350f-a477-48f2-84e9-bd815d04feae
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStatusRequest'
+            example:
+              status: confirmed
+      responses:
+        '200':
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Booking'
+              example:
+                success: true
+                data:
+                  id: 0129350f-a477-48f2-84e9-bd815d04feae
+                  userId: 54c9aa07-ee4b-45e2-beb1-4944dfa72b9d
+                  ticketTierId: bce7708f-8eb9-4562-96de-70175956c0b0
+                  concertId: fb353d72-13c5-42c2-b35e-62607018d5f0
+                  quantity: 2
+                  unitPrice: 3500000
+                  totalAmount: 7000000
+                  discountAmount: 0
+                  finalAmount: 7000000
+                  voucherCode: SUMMER10
+                  status: confirmed
+                  idempotencyKey: cf52e84c-b978-4702-bfc8-2fcdd4be5faa
+                  isFlagged: false
+                  flagReason: null
+                  createdAt: '2026-05-09T15:04:12.208Z'
+                  updatedAt: '2026-05-09T15:04:14.380Z'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: VALIDATION
+                message: 'status must be one of: confirmed, cancelled, failed'
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: NOT_FOUND
+                message: Booking not found
+        '422':
+          description: Invalid status transition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: BUSINESS_RULE
+                message: Cannot confirm booking with status 'cancelled'
+  /bookings/{id}/flag:
+    patch:
+      tags:
+        - Bookings (Admin)
+      summary: Flag a suspicious booking (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 0129350f-a477-48f2-84e9-bd815d04feae
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlagBookingRequest'
+            example:
+              reason: User made 5 bookings within 1 minute — suspected bot
+      responses:
+        '200':
+          description: Booking flagged — returns full booking object
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Booking'
+              example:
+                success: true
+                data:
+                  id: 0129350f-a477-48f2-84e9-bd815d04feae
+                  userId: 54c9aa07-ee4b-45e2-beb1-4944dfa72b9d
+                  ticketTierId: bce7708f-8eb9-4562-96de-70175956c0b0
+                  concertId: fb353d72-13c5-42c2-b35e-62607018d5f0
+                  quantity: 2
+                  unitPrice: 3500000
+                  totalAmount: 7000000
+                  discountAmount: 0
+                  finalAmount: 7000000
+                  voucherCode: SUMMER10
+                  status: confirmed
+                  idempotencyKey: cf52e84c-b978-4702-bfc8-2fcdd4be5faa
+                  isFlagged: true
+                  flagReason: User made 5 bookings within 1 minute — suspected bot
+                  createdAt: '2026-05-09T15:04:12.208Z'
+                  updatedAt: '2026-05-09T17:13:02.803Z'
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: NOT_FOUND
+                message: Booking not found
+  /bookings/{id}/unflag:
+    patch:
+      tags:
+        - Bookings (Admin)
+      summary: Remove flag from booking (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 0129350f-a477-48f2-84e9-bd815d04feae
+      responses:
+        '200':
+          description: Flag removed — returns full booking object
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Booking'
+              example:
+                success: true
+                data:
+                  id: 0129350f-a477-48f2-84e9-bd815d04feae
+                  userId: 54c9aa07-ee4b-45e2-beb1-4944dfa72b9d
+                  ticketTierId: bce7708f-8eb9-4562-96de-70175956c0b0
+                  concertId: fb353d72-13c5-42c2-b35e-62607018d5f0
+                  quantity: 2
+                  unitPrice: 3500000
+                  totalAmount: 7000000
+                  discountAmount: 0
+                  finalAmount: 7000000
+                  voucherCode: SUMMER10
+                  status: confirmed
+                  idempotencyKey: cf52e84c-b978-4702-bfc8-2fcdd4be5faa
+                  isFlagged: false
+                  flagReason: null
+                  createdAt: '2026-05-09T15:04:12.208Z'
+                  updatedAt: '2026-05-09T17:13:28.691Z'
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: NOT_FOUND
+                message: Booking not found
+  /vouchers:
+    post:
+      tags:
+        - Vouchers (Admin)
+      summary: Create a new voucher campaign (admin)
+      description: >
+        **Scope rules:**
+
+        - Omit `concertId` → voucher applies to all concerts.
+
+        - Provide `concertId` → voucher is restricted to that concert only.
+
+
+        **Code format:** 3–50 uppercase alphanumeric characters (`A-Z`, `0-9`,
+        `_`, `-`).
+
+
+        **Percentage cap:** `discountValue` must be 1–100 when `discountType =
+        percentage`.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVoucherRequest'
+            examples:
+              global_percentage:
+                summary: Global 10% off
+                value:
+                  name: Flash Sale 10%
+                  code: FLASHSALE10
+                  discountType: percentage
+                  discountValue: 10
+                  maxUses: 500
+                  minOrderValue: 500000
+                  expiresAt: '2099-12-31T23:59:59.000Z'
+                  concertId: fb353d72-13c5-42c2-b35e-62607018d5f0
+              concert_fixed:
+                summary: VIP 200k off (scoped to one concert)
+                value:
+                  name: VIP Discount
+                  code: VIP200K
+                  discountType: fixed
+                  discountValue: 200000
+                  maxUses: 100
+                  minOrderValue: 2000000
+                  concertId: c1b2c3d4-0000-0000-0000-000000000001
+      responses:
+        '201':
+          description: Voucher campaign created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Voucher'
+              example:
+                success: true
+                data:
+                  id: v1b2c3d4-0000-0000-0000-000000000001
+                  name: Flash Sale 10%
+                  code: FLASHSALE10
+                  discountType: percentage
+                  discountValue: 10
+                  maxUses: 500
+                  usedCount: 0
+                  remainingUses: 500
+                  minOrderValue: 500000
+                  expiresAt: '2099-12-31T23:59:59.000Z'
+                  concertId: null
+                  isExpired: false
+                  isExhausted: false
+                  createdAt: '2025-06-01T08:00:00.000Z'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                bad_code_format:
+                  summary: Invalid code format
+                  value:
+                    success: false
+                    type: VALIDATION
+                    message: >-
+                      Code must be 3–50 uppercase alphanumeric characters (A-Z,
+                      0-9, _, -)
+                percentage_over_100:
+                  summary: Percentage exceeds 100
+                  value:
+                    success: false
+                    type: VALIDATION
+                    message: Percentage discount cannot exceed 100
+                zero_discount:
+                  summary: Discount value is zero
+                  value:
+                    success: false
+                    type: VALIDATION
+                    message: discountValue must be greater than 0
+                max_uses_zero:
+                  summary: maxUses less than 1
+                  value:
+                    success: false
+                    type: VALIDATION
+                    message: maxUses must be at least 1
+                negative_min_order:
+                  summary: Negative minOrderValue
+                  value:
+                    success: false
+                    type: VALIDATION
+                    message: minOrderValue must be 0 or greater
+                code_too_short:
+                  summary: Code shorter than 3 chars
+                  value:
+                    success: false
+                    type: VALIDATION
+                    message: code must be at least 3 characters
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: UNAUTHORIZED
+                message: Missing or invalid Authorization header
+        '403':
+          description: Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: FORBIDDEN
+                message: Admin access required
+        '404':
+          description: Concert not found (when concertId provided)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: NOT_FOUND
+                message: Concert not found
+        '409':
+          description: Voucher code already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: CONFLICT
+                message: Voucher code 'FLASHSALE10' already exists
+        '422':
+          description: Domain rule violation (e.g. past expiresAt)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: BUSINESS_RULE
+                message: Expiry date must be in the future
+    get:
+      tags:
+        - Vouchers (Admin)
+      summary: List all voucher campaigns (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: concertId
+          schema:
+            type: string
+            format: uuid
+          required: false
+          example: c1b2c3d4-0000-0000-0000-000000000001
+          description: Filter by scoped concert. Omit for all.
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+            example: 20
+      responses:
+        '200':
+          description: Paginated list of voucher campaigns
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoucherListResponse'
+              example:
+                success: true
+                data:
+                  vouchers:
+                    - id: v1b2c3d4-0000-0000-0000-000000000001
+                      name: Flash Sale 10%
+                      code: FLASHSALE10
+                      discountType: percentage
+                      discountValue: 10
+                      maxUses: 500
+                      usedCount: 42
+                      remainingUses: 458
+                      minOrderValue: 500000
+                      expiresAt: '2099-12-31T23:59:59.000Z'
+                      concertId: null
+                      isExpired: false
+                      isExhausted: false
+                      createdAt: '2025-06-01T08:00:00.000Z'
+                    - id: v2b2c3d4-0000-0000-0000-000000000002
+                      name: Global Voucher 2
+                      code: GLOBAL2
+                      discountType: percentage
+                      discountValue: 10
+                      maxUses: 100
+                      usedCount: 0
+                      remainingUses: 100
+                      minOrderValue: 0
+                      expiresAt: null
+                      concertId: null
+                      isExpired: false
+                      isExhausted: false
+                      createdAt: '2025-06-01T08:00:00.000Z'
+                    - id: v3b2c3d4-0000-0000-0000-000000000003
+                      name: Scoped Voucher
+                      code: SCOPED1
+                      discountType: percentage
+                      discountValue: 10
+                      maxUses: 100
+                      usedCount: 0
+                      remainingUses: 100
+                      minOrderValue: 0
+                      expiresAt: null
+                      concertId: c1b2c3d4-0000-0000-0000-000000000001
+                      isExpired: false
+                      isExhausted: false
+                      createdAt: '2025-06-01T08:00:00.000Z'
+                  total: 3
+                  page: 1
+                  limit: 20
+        '403':
+          description: Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: FORBIDDEN
+                message: Admin access required
+  /vouchers/preview:
+    get:
+      tags:
+        - Vouchers (Customer)
+      summary: Preview voucher discount before booking
+      description: >
+        Validates the voucher and returns the calculated discount without
+        consuming usage.
+
+        Use this to show users the discount in the booking UI before they
+        confirm.
+
+
+        **Note:** This does NOT reserve or consume the voucher. The actual usage
+        count
+
+        increments only when a booking is created successfully.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: code
+          required: true
+          schema:
+            type: string
+            minLength: 1
+          example: FLASHSALE10
+        - in: query
+          name: orderAmount
+          required: true
+          schema:
+            type: number
+            exclusiveMinimum: 0
+          example: 2000000
+          description: Total order amount (unitPrice × quantity) in VND, before discount
+        - in: query
+          name: concertId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: c1b2c3d4-0000-0000-0000-000000000001
+      responses:
+        '200':
+          description: Discount preview
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/VoucherPreview'
+              examples:
+                percentage:
+                  summary: 10% off a 2M order
+                  value:
+                    success: true
+                    data:
+                      code: PREVIEW10
+                      discountType: percentage
+                      discountAmount: 200000
+                      finalAmount: 1800000
+                      description: 10% off
+                fixed:
+                  summary: 100k fixed off
+                  value:
+                    success: true
+                    data:
+                      code: FIXED100K
+                      discountType: fixed
+                      discountAmount: 100000
+                      finalAmount: 1900000
+                      description: 100,000 VND off
+                fixed_capped:
+                  summary: Fixed discount capped at orderAmount (finalAmount = 0)
+                  value:
+                    success: true
+                    data:
+                      code: FIXED100K
+                      discountType: fixed
+                      discountAmount: 50000
+                      finalAmount: 0
+                      description: 100,000 VND off
+                scoped_match:
+                  summary: Scoped voucher matching concert (15% off)
+                  value:
+                    success: true
+                    data:
+                      code: SCOPED
+                      discountType: percentage
+                      discountAmount: 150000
+                      finalAmount: 850000
+                      description: 15% off
+        '400':
+          description: Missing or invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing_concert_id:
+                  summary: Missing concertId
+                  value:
+                    success: false
+                    type: VALIDATION
+                    message: concertId is required
+                negative_amount:
+                  summary: Negative orderAmount
+                  value:
+                    success: false
+                    type: VALIDATION
+                    message: orderAmount must be positive
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: UNAUTHORIZED
+                message: Missing or invalid Authorization header
+        '404':
+          description: Voucher code not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: NOT_FOUND
+                message: Voucher not found
+        '422':
+          description: Voucher not applicable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                expired:
+                  summary: Voucher expired
+                  value:
+                    success: false
+                    type: BUSINESS_RULE
+                    message: Voucher has expired
+                exhausted:
+                  summary: Usage limit reached
+                  value:
+                    success: false
+                    type: BUSINESS_RULE
+                    message: Voucher has reached maximum usage limit
+                min_order:
+                  summary: Order below minimum
+                  value:
+                    success: false
+                    type: BUSINESS_RULE
+                    message: Minimum order value for this voucher is 500000
+                wrong_concert:
+                  summary: Scoped to different concert
+                  value:
+                    success: false
+                    type: BUSINESS_RULE
+                    message: Voucher is not valid for this concert
+  /vouchers/{id}:
+    get:
+      tags:
+        - Vouchers (Admin)
+      summary: Get voucher campaign detail (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: v1b2c3d4-0000-0000-0000-000000000001
+      responses:
+        '200':
+          description: Voucher detail with usage stats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Voucher'
+              example:
+                success: true
+                data:
+                  id: v1b2c3d4-0000-0000-0000-000000000001
+                  name: Flash Sale 10%
+                  code: DETAIL1
+                  discountType: percentage
+                  discountValue: 10
+                  maxUses: 100
+                  usedCount: 0
+                  remainingUses: 100
+                  minOrderValue: 0
+                  expiresAt: null
+                  concertId: null
+                  isExpired: false
+                  isExhausted: false
+                  createdAt: '2025-06-01T08:00:00.000Z'
+        '400':
+          description: Invalid UUID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: VALIDATION
+                message: Invalid voucher ID
+        '404':
+          description: Voucher not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: NOT_FOUND
+                message: Voucher campaign not found
+    patch:
+      tags:
+        - Vouchers (Admin)
+      summary: Update voucher campaign (admin)
+      description: >
+        Only `name`, `maxUses`, and `expiresAt` can be updated.
+
+
+        **Immutable fields:** `code`, `discountType`, `discountValue`,
+        `concertId`, `minOrderValue`
+
+        — changing these would break audit trails for existing bookings.
+
+
+        **maxUses rule:** Cannot be decreased below current `usedCount`.
+
+
+        **expiresAt:** Send `null` to remove expiry entirely.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: v1b2c3d4-0000-0000-0000-000000000001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateVoucherRequest'
+            examples:
+              update_name:
+                summary: Update name only
+                value:
+                  name: Updated Name
+              increase_max_uses:
+                summary: Increase maxUses
+                value:
+                  maxUses: 200
+              set_expiry:
+                summary: Set future expiresAt
+                value:
+                  expiresAt: '2099-06-01T00:00:00.000Z'
+              remove_expiry:
+                summary: Remove expiry date (never expires)
+                value:
+                  expiresAt: null
+      responses:
+        '200':
+          description: Voucher updated — returns full voucher object
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Voucher'
+              examples:
+                update_name:
+                  summary: After name update
+                  value:
+                    success: true
+                    data:
+                      id: v1b2c3d4-0000-0000-0000-000000000001
+                      name: Updated Name
+                      code: UPDATEME1
+                      discountType: percentage
+                      discountValue: 10
+                      maxUses: 100
+                      usedCount: 0
+                      remainingUses: 100
+                      minOrderValue: 0
+                      expiresAt: null
+                      concertId: null
+                      isExpired: false
+                      isExhausted: false
+                      createdAt: '2025-06-01T08:00:00.000Z'
+                increase_max_uses:
+                  summary: After maxUses increase to 200
+                  value:
+                    success: true
+                    data:
+                      id: v1b2c3d4-0000-0000-0000-000000000001
+                      name: Test Voucher
+                      code: UPDATEME2
+                      discountType: percentage
+                      discountValue: 10
+                      maxUses: 200
+                      usedCount: 0
+                      remainingUses: 200
+                      minOrderValue: 0
+                      expiresAt: null
+                      concertId: null
+                      isExpired: false
+                      isExhausted: false
+                      createdAt: '2025-06-01T08:00:00.000Z'
+                remove_expiry:
+                  summary: After removing expiresAt
+                  value:
+                    success: true
+                    data:
+                      id: v1b2c3d4-0000-0000-0000-000000000001
+                      name: Test Voucher
+                      code: UPDATEME4
+                      discountType: percentage
+                      discountValue: 10
+                      maxUses: 100
+                      usedCount: 0
+                      remainingUses: 100
+                      minOrderValue: 0
+                      expiresAt: null
+                      concertId: null
+                      isExpired: false
+                      isExhausted: false
+                      createdAt: '2025-06-01T08:00:00.000Z'
+        '400':
+          description: Validation error or empty body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                empty_body:
+                  value:
+                    success: false
+                    type: VALIDATION
+                    message: At least one field must be provided for update
+                short_name:
+                  value:
+                    success: false
+                    type: VALIDATION
+                    message: Voucher name must be at least 2 characters
+        '403':
+          description: Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: FORBIDDEN
+                message: Admin access required
+        '404':
+          description: Voucher not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: NOT_FOUND
+                message: Voucher campaign not found
+        '422':
+          description: Business rule violation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                max_uses_below_used:
+                  summary: maxUses below usedCount
+                  value:
+                    success: false
+                    type: BUSINESS_RULE
+                    message: maxUses cannot be less than current usedCount (5)
+                past_expiry:
+                  summary: Past expiry date
+                  value:
+                    success: false
+                    type: BUSINESS_RULE
+                    message: Expiry date must be in the future
+    delete:
+      tags:
+        - Vouchers (Admin)
+      summary: Delete voucher campaign (admin)
+      description: |
+        **Only allowed when `usedCount = 0`** (no one has used it yet).
+
+        If the voucher has already been used, deactivate it instead by setting
+        `expiresAt` to a past-equivalent future date via `PATCH`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: v1b2c3d4-0000-0000-0000-000000000001
+      responses:
+        '204':
+          description: Voucher deleted successfully (no body)
+        '400':
+          description: Invalid UUID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: VALIDATION
+                message: Invalid voucher ID
+        '403':
+          description: Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: FORBIDDEN
+                message: Admin access required
+        '404':
+          description: Voucher not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: NOT_FOUND
+                message: Voucher campaign not found
+        '422':
+          description: Voucher has been used — cannot delete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                type: BUSINESS_RULE
+                message: >-
+                  Cannot delete voucher that has been used 1 time(s). Deactivate
+                  by setting expiresAt to a past date instead.
