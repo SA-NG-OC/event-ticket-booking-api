@@ -131,9 +131,6 @@ npm test
 # Watch mode — tự re-run khi save file
 npm run test:watch
 
-# Với coverage report
-npm run test:coverage
-
 # Chạy 1 file test cụ thể
 npm test tests/integration/booking.test.ts
 npm test tests/integration/voucher.test.ts
@@ -358,5 +355,4 @@ npm run db:studio        # Drizzle Studio cho dev DB
 npm run db:migrate:test  # Apply migration lên test DB
 npm run studio:test      # Drizzle Studio cho test DB (port 4984)
 npm test                 # Chạy toàn bộ test
-npm run test:coverage    # Test + coverage report
 ```
